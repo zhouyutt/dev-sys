@@ -1,0 +1,44 @@
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import { fileURLToPath, URL } from 'node:url'
+
+export default defineConfig({
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 8080,
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_URL || 'http://localhost:3000',
+        changeOrigin: true
+      },
+      '/uploads': {
+        target: process.env.VITE_API_URL || 'http://localhost:3000',
+        changeOrigin: true
+      }
+    }
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+    chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['vue', 'vue-router', 'pinia'],
+          'vuestic': ['vuestic-ui'],
+          'utils': ['axios', 'dayjs']
+        }
+      }
+    }
+  },
+  optimizeDeps: {
+    include: ['vuestic-ui', 'iconify-icon']
+  }
+})

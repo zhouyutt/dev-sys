@@ -1,0 +1,86 @@
+services:
+  # MySQL 数据库服务
+  mysql:
+    image: mysql:8.0
+    container_name: dive-erp-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: dive_erp_2024
+      MYSQL_DATABASE: dive_erp
+      MYSQL_USER: dive_user
+      MYSQL_PASSWORD: dive_erp_2024
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dive-erp-network
+
+  # 后端服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        BUILDKIT_INLINE_CACHE: 1
+      x-bake:
+        provenance: false
+    container_name: dive-erp-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: dive_erp
+      DB_USER: root
+      DB_PASSWORD: dive_erp_2024
+      JWT_SECRET: dive_erp_jwt_secret_key_2024
+      JWT_EXPIRE: 7d
+      UPLOAD_DIR: ./uploads
+      MAX_FILE_SIZE: 10485760
+      FRONTEND_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - dive-erp-network
+
+  # 前端服务（pure-admin）
+  frontend:
+    build:
+      context: ./pure-admin-tpl
+      dockerfile: Dockerfile
+      args:
+        BUILDKIT_INLINE_CACHE: 1
+      x-bake:
+        provenance: false
+    container_name: dive-erp-frontend
+    restart: unless-stopped
+    environment:
+      # 提供给 pure-admin 前端使用的后端 API 地址
+      VITE_PROXY_TARGET: http://backend:3000
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - dive-erp-network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  dive-erp-network:
+    driver: bridge
