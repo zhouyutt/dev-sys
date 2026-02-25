@@ -5,6 +5,12 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true
     },
+    guest_id: {
+      type: DataTypes.STRING(32),
+      allowNull: true,
+      unique: true,
+      comment: '客人唯一编号，用于扫码/行程关联'
+    },
     // 基本信息
     name_en: {
       type: DataTypes.STRING(100),
@@ -75,6 +81,11 @@ module.exports = (sequelize, DataTypes) => {
         model: 'courses',
         key: 'id'
       }
+    },
+    learning_content: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      comment: '参与内容：OW, AOW, OW+AOW, FunDive, DSD, Snorkeling, Razor Side-mounted, Tech 40, Tech 50'
     },
     instructor_id: {
       type: DataTypes.INTEGER,
@@ -153,6 +164,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     tableName: 'students',
     indexes: [
+      { fields: ['guest_id'] },
       { fields: ['passport_number'] },
       { fields: ['course_id'] },
       { fields: ['room_id'] },

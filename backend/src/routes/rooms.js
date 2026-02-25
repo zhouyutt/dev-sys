@@ -21,6 +21,9 @@ router.post('/', roomController.createRoom);
 // 更新房间
 router.put('/:id', roomController.updateRoom);
 
+// 覆盖设置房间住客
+router.post('/:id/students', roomController.setRoomStudents);
+
 // 删除房间
 router.delete('/:id', roomController.deleteRoom);
 

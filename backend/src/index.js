@@ -7,8 +7,25 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 
 const { testConnection } = require('./config/database');
-const { syncDatabase } = require('./models');
+const { sequelize, syncDatabase } = require('./models');
 const routes = require('./routes');
+
+// 确保 students 表存在 guest_id 列（在 sync 前执行，避免索引报错）
+async function ensureGuestIdColumn() {
+  try {
+    const [rows] = await sequelize.query(
+      "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'students' AND COLUMN_NAME = 'guest_id'"
+    );
+    if (rows.length === 0) {
+      await sequelize.query(
+        "ALTER TABLE students ADD COLUMN guest_id VARCHAR(32) NULL UNIQUE COMMENT '客人唯一编号' AFTER id"
+      );
+      console.log('✓ Added students.guest_id column');
+    }
+  } catch (e) {
+    console.warn('ensureGuestIdColumn:', e.message);
+  }
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -104,6 +121,7 @@ const startServer = async () => {
       process.exit(1);
     }
 
+    await ensureGuestIdColumn();
     // 同步数据库模型
     await syncDatabase();
 

@@ -136,6 +136,63 @@ exports.me = async (req, res) => {
   }
 };
 
+// 刷新 accessToken（前端无感刷新用）
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken: token } = req.body;
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'refreshToken is required'
+      });
+    }
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'your_jwt_secret_key_change_in_production'
+    );
+    if (decoded.type !== 'refresh') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token'
+      });
+    }
+    const user = await User.findByPk(decoded.id);
+    if (!user || user.status !== 'active') {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found or inactive'
+      });
+    }
+    const accessToken = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      process.env.JWT_SECRET || 'your_jwt_secret_key_change_in_production',
+      { expiresIn: process.env.JWT_EXPIRE || '7d' }
+    );
+    const refreshToken = jwt.sign(
+      { id: user.id, type: 'refresh' },
+      process.env.JWT_SECRET || 'your_jwt_secret_key_change_in_production',
+      { expiresIn: '7d' }
+    );
+    const expiresInMs = parseInt(process.env.JWT_EXPIRE_MS || '604800000', 10);
+    const expires = new Date(Date.now() + expiresInMs);
+
+    res.json({
+      success: true,
+      data: {
+        accessToken,
+        refreshToken,
+        expires: expires.toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Refresh token failed:', error);
+    return res.status(401).json({
+      success: false,
+      message: 'Refresh token invalid or expired'
+    });
+  }
+};
+
 // 修改密码
 exports.changePassword = async (req, res) => {
   try {

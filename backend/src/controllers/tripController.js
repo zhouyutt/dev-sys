@@ -1,4 +1,4 @@
-const { Trip, Boat, Staff, TripParticipant, Student } = require('../models');
+const { Trip, Boat, Staff, TripParticipant, Student, Room } = require('../models');
 const { Op } = require('sequelize');
 
 // 获取所有行程
@@ -22,7 +22,12 @@ exports.getAllTrips = async (req, res) => {
           model: TripParticipant, 
           as: 'participants',
           include: [
-            { model: Student, as: 'student', attributes: ['id', 'name_en', 'name_cn', 'phone'] }
+            { 
+              model: Student, 
+              as: 'student',
+              attributes: ['id', 'guest_id', 'name_en', 'name_cn', 'phone', 'learning_content', 'room_id'],
+              include: [{ model: Room, as: 'room', attributes: ['id', 'room_number'], required: false }]
+            }
           ]
         }
       ],
@@ -65,7 +70,7 @@ exports.getTomorrowTrips = async (req, res) => {
           where: { status: 'confirmed' },
           required: false,
           include: [
-            { model: Student, as: 'student', attributes: ['id', 'name_en', 'name_cn'] }
+            { model: Student, as: 'student', attributes: ['id', 'name_en', 'name_cn', 'learning_content'] }
           ]
         }
       ],

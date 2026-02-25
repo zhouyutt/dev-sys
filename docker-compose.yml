@@ -71,7 +71,7 @@ services:
       # 提供给 pure-admin 前端使用的后端 API 地址
       VITE_PROXY_TARGET: http://backend:3000
     ports:
-      - "8080:80"
+      - "8082:80"
     depends_on:
       - backend
     networks:

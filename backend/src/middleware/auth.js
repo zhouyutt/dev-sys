@@ -36,11 +36,11 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // 收集用户的所有权限代码
+    // 收集用户的所有权限代码（兼容无角色或角色无权限的种子用户）
     const permissions = new Set();
-    user.roles.forEach(role => {
-      role.permissions.forEach(permission => {
-        permissions.add(permission.code);
+    (user.roles || []).forEach(role => {
+      (role.permissions || []).forEach(permission => {
+        if (permission && permission.code) permissions.add(permission.code);
       });
     });
 

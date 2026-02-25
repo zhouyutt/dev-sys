@@ -1,5 +1,10 @@
-const { Student, Course, Room, Staff, EquipmentAssignment, Equipment } = require('../models');
+const { Student, Course, Room, Staff, EquipmentAssignment, Equipment, Trip, TripParticipant, Boat } = require('../models');
 const { extractPassportInfo } = require('../utils/passport');
+const { Op } = require('sequelize');
+
+function generateGuestId() {
+  return 'G' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 8).toUpperCase();
+}
 
 // 获取所有学员
 exports.getAllStudents = async (req, res) => {
@@ -96,7 +101,42 @@ exports.createStudent = async (req, res) => {
       });
     }
 
+    if (!studentData.guest_id) {
+      studentData.guest_id = generateGuestId();
+    }
     const student = await Student.create(studentData);
+
+    const isEnroll = req.path === '/enroll' || (req.baseUrl && req.baseUrl.includes('enroll'));
+    if (isEnroll) {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const boat = await Boat.findOne({ where: { status: { [Op.ne]: 'inactive' } } });
+        if (boat) {
+          let trip = await Trip.findOne({
+            where: { trip_date: today, status: { [Op.in]: ['scheduled', 'in_progress'] } },
+            order: [['id', 'ASC']]
+          });
+          if (!trip) {
+            trip = await Trip.create({
+              trip_date: today,
+              boat_id: boat.id,
+              destination: 'Mabul Island',
+              departure_time: '08:00:00',
+              max_participants: 12,
+              current_participants: 0,
+              status: 'scheduled'
+            });
+          }
+          const exists = await TripParticipant.findOne({ where: { trip_id: trip.id, student_id: student.id } });
+          if (!exists) {
+            await TripParticipant.create({ trip_id: trip.id, student_id: student.id, status: 'confirmed' });
+            await trip.update({ current_participants: (trip.current_participants || 0) + 1 });
+          }
+        }
+      } catch (err) {
+        console.error('Auto-create trip for enroll:', err);
+      }
+    }
 
     res.status(201).json({
       success: true,

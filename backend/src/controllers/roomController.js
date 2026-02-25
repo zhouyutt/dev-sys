@@ -1,4 +1,4 @@
-const { Room, Student } = require('../models');
+const { Room, Student, sequelize } = require('../models');
 
 // 获取所有房间
 exports.getAllRooms = async (req, res) => {
@@ -13,6 +13,9 @@ exports.getAllRooms = async (req, res) => {
 
     const rooms = await Room.findAll({
       where,
+      include: [
+        { model: Student, as: 'students', attributes: ['id', 'name_cn', 'name_en'], required: false }
+      ],
       order: [['floor', 'ASC'], ['room_number', 'ASC']]
     });
 
@@ -144,6 +147,78 @@ exports.deleteRoom = async (req, res) => {
     res.status(500).json({
       success: false,
       message: '删除失败'
+    });
+  }
+};
+
+// 设置房间住客（覆盖式分配）
+exports.setRoomStudents = async (req, res) => {
+  const { student_ids } = req.body;
+
+  if (!Array.isArray(student_ids)) {
+    return res.status(400).json({
+      success: false,
+      message: 'student_ids must be an array'
+    });
+  }
+
+  const t = await sequelize.transaction();
+  try {
+    const room = await Room.findByPk(req.params.id, { transaction: t });
+    if (!room) {
+      await t.rollback();
+      return res.status(404).json({
+        success: false,
+        message: '房间不存在'
+      });
+    }
+
+    // 清空当前房间的住客
+    await Student.update(
+      { room_id: null },
+      { where: { room_id: room.id }, transaction: t }
+    );
+
+    // 重新分配新住客
+    if (student_ids.length > 0) {
+      await Student.update(
+        { room_id: room.id },
+        { where: { id: student_ids }, transaction: t }
+      );
+    }
+
+    const newCount = await Student.count({
+      where: { room_id: room.id },
+      transaction: t
+    });
+
+    await room.update(
+      {
+        current_occupancy: newCount,
+        status: newCount > 0 ? 'occupied' : 'available'
+      },
+      { transaction: t }
+    );
+
+    await t.commit();
+
+    const fresh = await Room.findByPk(room.id, {
+      include: [
+        { model: Student, as: 'students', attributes: ['id', 'name_cn', 'name_en'] }
+      ]
+    });
+
+    res.json({
+      success: true,
+      message: '房间住客更新成功',
+      data: fresh
+    });
+  } catch (error) {
+    await t.rollback();
+    console.error('更新房间住客失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '更新房间住客失败'
     });
   }
 };
