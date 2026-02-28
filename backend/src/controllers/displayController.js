@@ -214,43 +214,30 @@ exports.getTodayTripsByIsland = async (req, res) => {
 // 获取实时房间状态（大屏展示）
 exports.getRoomsStatus = async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    
-    // 获取所有房间及其当前入住学生
+    // 获取所有房间，并通过 room_id 直接关联当前入住学生（不依赖 check_in/out_date）
     const rooms = await Room.findAll({
       attributes: ['id', 'room_number', 'floor', 'room_type', 'max_capacity', 'current_occupancy', 'status'],
+      include: [
+        {
+          model: Student,
+          as: 'students',
+          attributes: ['id', 'name_cn', 'name_en'],
+          required: false
+        }
+      ],
       order: [['room_number', 'ASC']]
     });
 
-    // 获取今天入住的学生
-    const studentsInRooms = await Student.findAll({
-      where: {
-        room_id: {
-          [Op.ne]: null
-        },
-        check_in_date: {
-          [Op.lte]: today
-        },
-        check_out_date: {
-          [Op.gte]: today
-        }
-      },
-      attributes: ['id', 'name_cn', 'name_en', 'room_id', 'check_in_date', 'check_out_date']
-    });
-
-    // 按楼层分组
-    const roomsByFloor = {
-      'A': [],
-      'B': []
-    };
+    // 按楼层分组，并根据实际关联学生数实时计算状态
+    const roomsByFloor = { 'A': [], 'B': [] };
 
     rooms.forEach(room => {
       const roomData = room.toJSON();
-      const assigned = studentsInRooms.filter(s => s.room_id === room.id);
-      roomData.students = assigned;
-      roomData.current_occupancy = assigned.length;
-      if (assigned.length > 0 && room.status === 'available') {
-        roomData.status = 'occupied';
+      const studentCount = (roomData.students || []).length;
+      roomData.current_occupancy = studentCount;
+      // 根据实际学生数决定状态：有学生=occupied，无学生=available（维修中保持不变）
+      if (room.status !== 'maintenance') {
+        roomData.status = studentCount > 0 ? 'occupied' : 'available';
       }
       if (roomsByFloor[room.floor]) {
         roomsByFloor[room.floor].push(roomData);
@@ -258,10 +245,8 @@ exports.getRoomsStatus = async (req, res) => {
     });
 
     const totalRooms = rooms.length;
-    const occupiedRooms = rooms.filter(r => {
-      const assigned = studentsInRooms.filter(s => s.room_id === r.id);
-      return assigned.length > 0 || r.status === 'occupied';
-    }).length;
+    const occupiedRooms = roomsByFloor['A'].concat(roomsByFloor['B'])
+      .filter(r => r.status === 'occupied').length;
     const availableRooms = totalRooms - occupiedRooms;
 
     res.set('Cache-Control', 'no-store');
