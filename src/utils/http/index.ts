@@ -17,8 +17,9 @@ import { useUserStoreHook } from "@/store/modules/user";
 
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
 const defaultConfig: AxiosRequestConfig = {
+  baseURL: import.meta.env.VITE_API_BASE ?? "/api",
   // 请求超时时间
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     Accept: "application/json, text/plain, */*",
     "Content-Type": "application/json",
@@ -72,8 +73,10 @@ class PureHttp {
           return config;
         }
         /** 请求白名单，放置一些不需要`token`的接口（通过设置请求白名单，防止`token`过期后再请求造成的死循环问题） */
-        const whiteList = ["/refresh-token", "/login"];
-        return whiteList.some(url => config.url.endsWith(url))
+        const whiteList = ["/refresh-token", "/auth/refresh-token", "/login", "/auth/login", "/enrollment"];
+        const fullUrl = config.url ?? "";
+        if (fullUrl.includes("/display")) return config;
+        return whiteList.some(url => fullUrl.endsWith(url))
           ? config
           : new Promise(resolve => {
               const data = getToken();
@@ -174,13 +177,13 @@ class PureHttp {
     });
   }
 
-  /** 单独抽离的`post`工具函数 */
+  /** 单独抽离的`post`工具函数（第二个参数为请求体，会放入 config.data） */
   public post<T, P>(
     url: string,
-    params?: AxiosRequestConfig<P>,
+    params?: P,
     config?: PureHttpRequestConfig
   ): Promise<T> {
-    return this.request<T>("post", url, params, config);
+    return this.request<T>("post", url, { data: params } as AxiosRequestConfig, config);
   }
 
   /** 单独抽离的`get`工具函数 */
@@ -190,6 +193,24 @@ class PureHttp {
     config?: PureHttpRequestConfig
   ): Promise<T> {
     return this.request<T>("get", url, params, config);
+  }
+
+  /** 单独抽离的`put`工具函数（第二个参数为请求体，会放入 config.data） */
+  public put<T, P>(
+    url: string,
+    params?: P,
+    config?: PureHttpRequestConfig
+  ): Promise<T> {
+    return this.request<T>("put", url, { data: params } as AxiosRequestConfig, config);
+  }
+
+  /** 单独抽离的`delete`工具函数 */
+  public delete<T, P>(
+    url: string,
+    params?: AxiosRequestConfig<P>,
+    config?: PureHttpRequestConfig
+  ): Promise<T> {
+    return this.request<T>("delete", url, params, config);
   }
 }
 

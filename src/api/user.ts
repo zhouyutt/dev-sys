@@ -72,14 +72,34 @@ type ResultTable = {
   };
 };
 
-/** 登录 */
+/** 登录（对接 Dive ERP 后端 /api/auth/login，并转换为 pure-admin 格式） */
 export const getLogin = (data?: object) => {
-  return http.request<UserResult>("post", "/login", { data });
+  return http
+    .request<{ success?: boolean; message?: string; data?: UserResult["data"] }>(
+      "post",
+      "/auth/login",
+      { data }
+    )
+    .then((res: any) => {
+      if (res && res.success && res.data)
+        return { code: 0, message: res.message || "", data: res.data };
+      return {
+        code: 1,
+        message: (res && res.message) || "Login failed",
+        data: undefined
+      };
+    })
+    .catch((err: any) => ({
+      code: 1,
+      message:
+        err?.response?.data?.message || err?.message || "Login failed",
+      data: undefined
+    })) as Promise<UserResult>;
 };
 
-/** 刷新`token` */
+/** 刷新`token`（对接 Dive ERP 后端 /api/auth/refresh-token） */
 export const refreshTokenApi = (data?: object) => {
-  return http.request<RefreshTokenResult>("post", "/refresh-token", { data });
+  return http.request<RefreshTokenResult>("post", "/auth/refresh-token", { data });
 };
 
 /** 账户设置-个人信息 */

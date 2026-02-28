@@ -64,5 +64,25 @@ export default [
       title: $t("menus.pureEmpty"),
       showLink: false
     }
+  },
+  // Dive ERP 公开页：扫码报名（无需登录）
+  {
+    path: "/enroll",
+    name: "Enroll",
+    component: () => import("@/views/dive-erp/enroll/index.vue"),
+    meta: {
+      title: "Student Enrollment",
+      showLink: false
+    }
+  },
+  // Dive ERP 大屏展示（无需登录）
+  {
+    path: "/display",
+    name: "Display",
+    component: () => import("@/views/dive-erp/display/index.vue"),
+    meta: {
+      title: "Display Screen",
+      showLink: false
+    }
   }
 ] satisfies Array<RouteConfigsTable>;
