@@ -5,6 +5,7 @@ import { menuType } from "@/layout/types";
 import { ReText } from "@/components/ReText";
 import { useNav } from "@/layout/hooks/useNav";
 import { transformI18n } from "@/plugins/i18n";
+import { useI18n } from "vue-i18n";
 import SidebarLinkItem from "./SidebarLinkItem.vue";
 import SidebarExtraIcon from "./SidebarExtraIcon.vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -24,6 +25,13 @@ import ArrowRight from "~icons/ep/arrow-right-bold";
 
 const attrs = useAttrs();
 const { layout, isCollapse, tooltipEffect, getDivStyle } = useNav();
+// 引入 locale 使 transformI18n 在切换语言时响应式重新计算
+const { locale } = useI18n();
+const i18nTitle = (title: any) => {
+  // 依赖 locale.value 使 computed 在语言切换时重新执行
+  void locale.value;
+  return transformI18n(title);
+};
 
 const props = defineProps({
   item: {
@@ -161,7 +169,7 @@ function resolvePath(routePath) {
         truncated
         class="w-full! px-3! min-w-[54px]! text-center! text-inherit!"
       >
-        {{ transformI18n(onlyOneChild.meta.title) }}
+        {{ i18nTitle(onlyOneChild.meta.title) }}
       </el-text>
 
       <template #title>
@@ -173,7 +181,7 @@ function resolvePath(routePath) {
             }"
             class="w-full! text-inherit!"
           >
-            {{ transformI18n(onlyOneChild.meta.title) }}
+            {{ i18nTitle(onlyOneChild.meta.title) }}
           </ReText>
           <SidebarExtraIcon :extraIcon="onlyOneChild.meta.extraIcon" />
         </div>
@@ -212,7 +220,7 @@ function resolvePath(routePath) {
         }"
         :class="textClass"
       >
-        {{ transformI18n(item.meta.title) }}
+        {{ i18nTitle(item.meta.title) }}
       </ReText>
       <SidebarExtraIcon v-if="!isCollapse" :extraIcon="item.meta.extraIcon" />
     </template>

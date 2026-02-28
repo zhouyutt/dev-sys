@@ -2,16 +2,22 @@
 import { useDark, useECharts } from "@pureadmin/utils";
 import { type PropType, ref, computed, watch, nextTick } from "vue";
 
-const props = defineProps({
-  requireData: {
-    type: Array as PropType<Array<number>>,
-    default: () => []
-  },
-  questionData: {
-    type: Array as PropType<Array<number>>,
-    default: () => []
+const props = withDefaults(
+  defineProps<{
+    requireData?: number[];
+    questionData?: number[];
+    requireLegend?: string;
+    questionLegend?: string;
+    xAxisData?: string[];
+  }>(),
+  {
+    requireData: () => [],
+    questionData: () => [],
+    requireLegend: "需求人数",
+    questionLegend: "提问数量",
+    xAxisData: () => ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
   }
-});
+);
 
 const { isDark } = useDark();
 
@@ -41,7 +47,7 @@ watch(
         right: 0
       },
       legend: {
-        data: ["需求人数", "提问数量"],
+        data: [props.requireLegend, props.questionLegend],
         textStyle: {
           color: "#606266",
           fontSize: "0.875rem"
@@ -51,7 +57,7 @@ watch(
       xAxis: [
         {
           type: "category",
-          data: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
+          data: props.xAxisData,
           axisLabel: {
             fontSize: "0.875rem"
           },
@@ -74,7 +80,7 @@ watch(
       ],
       series: [
         {
-          name: "需求人数",
+          name: props.requireLegend,
           type: "bar",
           barWidth: 10,
           itemStyle: {
@@ -84,7 +90,7 @@ watch(
           data: props.requireData
         },
         {
-          name: "提问数量",
+          name: props.questionLegend,
           type: "bar",
           barWidth: 10,
           itemStyle: {

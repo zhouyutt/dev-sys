@@ -242,6 +242,176 @@ login:
   purePassWordDifferentReg: 两次密码不一致!
   purePassWordUpdateReg: 修改密码成功
   pureLoginExpired: 登录已过期，请重新登录
+diveErp:
+  menus:
+    dashboard: 仪表盘
+    roomManagement: 房间管理
+    guestManagement: 客人管理
+    tripManagement: 行程管理
+    staffManagement: 员工管理
+    boatManagement: 船只管理
+    enrollmentForm: 报名表
+    diveErp: 潜水ERP
+  common:
+    id: 编号
+    actions: 操作
+    edit: 编辑
+    delete: 删除
+    cancel: 取消
+    ok: 确定
+    add: 新增
+    status: 状态
+    notes: 备注
+    name: 姓名
+    phone: 电话
+    email: 邮箱
+    required: 必填
+    loading: 加载中...
+    noData: 暂无数据
+  guests:
+    title: 客人管理
+    addGuest: "+ 新增客人"
+    editGuest: 编辑客人
+    guestId: 客人ID
+    nameEn: 英文姓名
+    nameCn: 中文姓名
+    gender: 性别
+    male: 男
+    female: 女
+    other: 其他
+    passportNo: 护照号
+    learningContent: 学习内容
+    room: 房间
+    emptyRoom: 不住宿则留空
+    pending: 待处理
+    inHouse: 入住中
+    completed: 已完成
+    deleteConfirm: 确定删除此客人？
+    loadFailed: 加载客人失败
+    englishName: 英文姓名
+    chineseName: 中文姓名
+  rooms:
+    title: 房间管理
+    addRoom: "+ 新增房间"
+    editRoom: 编辑房间
+    roomNo: 房间号
+    floor: 区域
+    roomType: 房型
+    occupancy: 入住情况
+    available: 空闲
+    occupied: 已入住
+    maintenance: 维修中
+    maxCapacity: 最大容量
+    guests: 住客
+    selectGuests: 选择住客
+    deleteConfirm: 确定删除此房间？
+    loadFailed: 加载房间失败
+  trips:
+    title: 行程管理
+    addTrip: "+ 新增行程"
+    editTrip: 编辑行程
+    tripDate: 出行日期
+    destination: 目的地
+    boat: 船只
+    captain: 船长
+    dm: 潜导
+    instructor: 教练
+    departure: 出发时间
+    participants: 参与人数
+    scheduled: 已安排
+    cancelled: 已取消
+    guestList: 客人列表
+    noGuests: 暂无客人
+    selectGuests: 选择客人
+    deleteConfirm: 确定删除此行程？
+    loadFailed: 加载行程失败
+    selectDate: 选择日期
+    selectDestination: 目的地
+    departureTime: 出发时间
+  staff:
+    title: 员工管理
+    addStaff: "+ 新增员工"
+    editStaff: 编辑员工
+    nameEn: 英文姓名
+    nameCn: 中文姓名
+    role: 职位
+    captain: 船长
+    diveMaster: 潜导
+    instructor: 教练
+    staffRole: 员工
+    certification: 证书
+    languages: 语言
+    hireDate: 入职日期
+    active: 在职
+    inactive: 离职
+    onLeave: 休假
+    deleteConfirm: 确定删除此员工？
+    loadFailed: 加载员工失败
+  boats:
+    title: 船只管理
+    addBoat: "+ 新增船只"
+    editBoat: 编辑船只
+    boatNo: 船号
+    boatName: 船名
+    type: 类型
+    small: 小船
+    large: 大船
+    capacity: 容量
+    available: 可用
+    inUse: 使用中
+    maintenance: 维修中
+    deleteConfirm: 确定删除此船只？
+    loadFailed: 加载船只失败
+  enroll:
+    title: 仙本那潜水店
+    subtitle: 学员报名表
+    hint: 请填写以下信息。
+    passportSection: 护照照片（可选）
+    passportDrag: 点击或拖拽护照照片到此处
+    passportHint: 我们将尝试识别护照号和基本信息。
+    basicInfo: 基本信息
+    nameEn: "英文姓名 *"
+    nameCn: 中文姓名
+    gender: "性别 *"
+    male: 男
+    female: 女
+    other: 其他
+    dob: 出生日期
+    nationality: 国籍
+    contactInfo: 联系方式
+    phoneNo: "手机号码 *"
+    wechat: 微信号
+    passportInfo: 护照信息
+    passportNo: "护照号码 *"
+    passportExpiry: 护照有效期
+    emergency: 紧急联系人
+    emergencyName: 姓名
+    emergencyPhone: 电话号码
+    courseSection: 课程选择
+    learningContent: 学习内容
+    courseType: 课程类型
+    additionalNotes: 备注
+    submit: 提交报名
+    passportOcrSuccess: 护照识别成功。
+    passportOcrFail: 护照识别失败，请手动填写。
+    passportUploadFail: 护照照片上传失败。
+    enrollSuccess: 报名提交成功。
+    enrollFail: 报名失败
+  dashboard:
+    title: 仙本那潜水店 - 实时大屏
+    todayTrips: 今日出海行程
+    boats: 艘船
+    noTrips: 暂无行程
+    roomStatus: 房间状态
+    totalRooms: 总房间数
+    occupied: 已入住
+    available: 空闲
+    areaA: A区
+    areaB: B区
+    students: 学员
+    loading: 加载中...
+    fullscreen: 全屏
+    exitFullscreen: 退出全屏
 tableBar:
   pureList: 列表
   pureLarge: 宽松

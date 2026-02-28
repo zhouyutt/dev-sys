@@ -64,9 +64,29 @@ export const constantRoutes: Array<RouteRecordRaw> = formatTwoStageRoutes(
 /** 初始的静态路由，用于退出登录时重置路由 */
 const initConstantRoutes: Array<RouteRecordRaw> = cloneDeep(constantRoutes);
 
-/** 用于渲染菜单，保持原始层级 */
+/**
+ * 用于渲染菜单，保持原始层级
+ *
+ * 业务要求：
+ * - 首页 + Dive ERP 各项展开为顶级菜单（不做 Dive ERP 下拉）
+ * - 保留「系统设置」「用户权限配置」及其子菜单
+ */
+const menuRootWhiteList = ["/", "/dive", "/system", "/permission"];
+const menuRoots: any[] = [];
+(routes as any[]).forEach(route => {
+  if (!route?.path) return;
+  if (route.path === "/") {
+    menuRoots.push(route);
+  } else if (route.path === "/dive" && route.children?.length) {
+    // 将 Dive ERP 子项展开为顶级菜单项
+    route.children.forEach((child: any) => menuRoots.push(child));
+  } else if (menuRootWhiteList.includes(route.path)) {
+    menuRoots.push(route);
+  }
+});
+
 export const constantMenus: Array<RouteComponent> = ascending(
-  routes.flat(Infinity)
+  menuRoots.flat(Infinity)
 ).concat(...remainingRouter);
 
 /** 不参与菜单的路由 */

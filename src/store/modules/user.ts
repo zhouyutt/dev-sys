@@ -106,12 +106,16 @@ export const useUserStore = defineStore("pure-user", {
     async handRefreshToken(data) {
       return new Promise<RefreshTokenResult>((resolve, reject) => {
         refreshTokenApi(data)
-          .then(data => {
-            if (data.code === 0) {
-              setToken(data.data);
-              resolve(data);
+          .then(res => {
+            const data = (res as any)?.data;
+            if ((res as any)?.code === 0 && data) {
+              setToken(data);
+              resolve(res as RefreshTokenResult);
+            } else if ((res as any)?.success && data) {
+              setToken(data);
+              resolve({ code: 0, message: "ok", data } as RefreshTokenResult);
             } else {
-              reject(data.message);
+              reject((res as any)?.message || "Refresh failed");
             }
           })
           .catch(error => {
