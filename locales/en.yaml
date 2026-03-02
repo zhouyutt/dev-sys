@@ -268,6 +268,8 @@ diveErp:
     required: Required
     loading: Loading...
     noData: No data
+    search: Search...
+    total: Total
   guests:
     title: Guest Management
     addGuest: "+ Add Guest"
@@ -290,6 +292,15 @@ diveErp:
     loadFailed: Failed to load guests
     englishName: English Name
     chineseName: Chinese Name
+    nationality: Nationality
+    birthDate: Birth Date
+    passportExpiry: Passport Expiry
+    emergencyContact: Emergency Contact
+    emergencyPhone: Emergency Phone
+    checkIn: Check-in Date
+    checkOut: Check-out Date
+    tripHistory: Trip History
+    noTrips: No trip records
   rooms:
     title: Room Management
     addRoom: "+ Add Room"
@@ -328,6 +339,7 @@ diveErp:
     selectDate: Select date
     selectDestination: Destination
     departureTime: Departure time
+    maxParticipants: Max Participants
   staff:
     title: Staff Management
     addStaff: "+ Add Staff"

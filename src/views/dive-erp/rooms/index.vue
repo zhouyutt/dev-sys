@@ -1,15 +1,38 @@
 <template>
-  <div class="main p-4">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-lg font-semibold">{{ t("diveErp.rooms.title") }}</h2>
+  <div class="main flex flex-col h-full p-4 gap-3">
+    <!-- 顶部工具栏 -->
+    <div class="flex flex-wrap items-center gap-2">
+      <el-input
+        v-model="searchText"
+        :placeholder="t('diveErp.common.search')"
+        clearable
+        style="width: 220px"
+      >
+        <template #prefix><el-icon><Search /></el-icon></template>
+      </el-input>
+      <el-select v-model="filterFloor" clearable :placeholder="t('diveErp.rooms.floor')" style="width: 100px">
+        <el-option label="A" value="A" />
+        <el-option label="B" value="B" />
+      </el-select>
+      <el-select v-model="filterStatus" clearable :placeholder="t('diveErp.common.status')" style="width: 120px">
+        <el-option :label="t('diveErp.rooms.available')" value="available" />
+        <el-option :label="t('diveErp.rooms.occupied')" value="occupied" />
+        <el-option :label="t('diveErp.rooms.maintenance')" value="maintenance" />
+      </el-select>
+      <span class="text-gray-400 text-sm ml-1">{{ t('diveErp.common.total') }}: {{ filteredList.length }}</span>
+      <div class="flex-1" />
       <el-button type="primary" @click="openDialog()">{{ t("diveErp.rooms.addRoom") }}</el-button>
     </div>
+
+    <!-- 表格 -->
     <el-table
       v-loading="loading"
-      :data="dataList"
+      :data="filteredList"
       border
       stripe
       style="width: 100%"
+      class="flex-1"
+      height="100%"
       :header-cell-style="{ background: 'var(--el-fill-color-light)' }"
     >
       <el-table-column prop="id" :label="t('diveErp.common.id')" width="70" align="center" />
@@ -17,20 +40,18 @@
       <el-table-column prop="floor" :label="t('diveErp.rooms.floor')" width="80" align="center" />
       <el-table-column prop="room_type" :label="t('diveErp.rooms.roomType')" min-width="140" />
       <el-table-column :label="t('diveErp.rooms.occupancy')" width="120" align="center">
-        <template #default="{ row }">
-          {{ row.current_occupancy || 0 }}/{{ row.max_capacity || 3 }} ppl
-        </template>
+        <template #default="{ row }">{{ row.current_occupancy || 0 }}/{{ row.max_capacity || 3 }} ppl</template>
       </el-table-column>
       <el-table-column prop="status" :label="t('diveErp.common.status')" width="110" align="center">
         <template #default="{ row }">
-          <el-tag :type="row.status === 'available' ? 'success' : 'danger'" size="small">
-            {{ row.status === 'available' ? t("diveErp.rooms.available") : t("diveErp.rooms.occupied") }}
+          <el-tag :type="row.status === 'available' ? 'success' : row.status === 'maintenance' ? 'warning' : 'danger'" size="small">
+            {{ row.status === 'available' ? t("diveErp.rooms.available") : row.status === 'maintenance' ? t("diveErp.rooms.maintenance") : t("diveErp.rooms.occupied") }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column :label="t('diveErp.rooms.guests')" min-width="140" show-overflow-tooltip>
+      <el-table-column :label="t('diveErp.rooms.guests')" min-width="160" show-overflow-tooltip>
         <template #default="{ row }">
-          <template v-if="row.status !== 'available' && (row.students?.length || 0) > 0">
+          <template v-if="(row.students?.length || 0) > 0">
             <span v-for="(s, i) in (row.students || [])" :key="s.id">
               {{ s.name_cn || s.name_en || '—' }}{{ i < (row.students?.length || 0) - 1 ? '、' : '' }}
             </span>
@@ -39,7 +60,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="notes" :label="t('diveErp.common.notes')" min-width="120" show-overflow-tooltip />
-      <el-table-column :label="t('diveErp.common.actions')" width="160" fixed="right" align="center">
+      <el-table-column :label="t('diveErp.common.actions')" width="140" fixed="right" align="center">
         <template #default="{ row }">
           <el-button link type="primary" size="small" @click="openDialog('Edit', row)">{{ t("diveErp.common.edit") }}</el-button>
           <el-popconfirm :title="t('diveErp.rooms.deleteConfirm')" @confirm="handleDelete(row)">
@@ -51,6 +72,7 @@
       </el-table-column>
     </el-table>
 
+    <!-- 编辑/新增弹窗 -->
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? t('diveErp.rooms.editRoom') : t('diveErp.rooms.addRoom')"
@@ -63,7 +85,7 @@
           <el-input v-model="form.room_number" placeholder="e.g. A2, B3" />
         </el-form-item>
         <el-form-item :label="t('diveErp.rooms.floor')" prop="floor">
-          <el-select v-model="form.floor" :placeholder="t('diveErp.rooms.floor')" style="width: 100%">
+          <el-select v-model="form.floor" style="width: 100%">
             <el-option label="A" value="A" />
             <el-option label="B" value="B" />
           </el-select>
@@ -75,20 +97,14 @@
           <el-input-number v-model="form.max_capacity" :min="1" :max="10" />
         </el-form-item>
         <el-form-item :label="t('diveErp.common.status')" prop="status">
-          <el-select v-model="form.status" :placeholder="t('diveErp.common.status')" style="width: 100%">
+          <el-select v-model="form.status" style="width: 100%">
             <el-option :label="t('diveErp.rooms.available')" value="available" />
             <el-option :label="t('diveErp.rooms.occupied')" value="occupied" />
             <el-option :label="t('diveErp.rooms.maintenance')" value="maintenance" />
           </el-select>
         </el-form-item>
         <el-form-item :label="t('diveErp.rooms.guests')">
-          <el-select
-            v-model="form.guest_student_ids"
-            multiple
-            filterable
-            :placeholder="t('diveErp.rooms.selectGuests')"
-            style="width: 100%"
-          >
+          <el-select v-model="form.guest_student_ids" multiple filterable style="width: 100%">
             <el-option
               v-for="s in allGuests"
               :key="s.id"
@@ -110,8 +126,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick } from "vue";
+import { ref, reactive, computed, onMounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
+import { Search } from "@element-plus/icons-vue";
 import { message } from "@/utils/message";
 import { roomApi, studentApi } from "@/api/dive";
 
@@ -126,6 +143,30 @@ const isEdit = ref(false);
 const submitLoading = ref(false);
 const formRef = ref();
 const allGuests = ref<any[]>([]);
+
+// 搜索和筛选
+const searchText = ref("");
+const filterFloor = ref("");
+const filterStatus = ref("");
+
+const filteredList = computed(() => {
+  let list = dataList.value;
+  const kw = searchText.value.trim().toLowerCase();
+  if (kw) {
+    list = list.filter(r =>
+      (r.room_number || "").toLowerCase().includes(kw) ||
+      (r.floor || "").toLowerCase().includes(kw) ||
+      (r.room_type || "").toLowerCase().includes(kw) ||
+      (r.notes || "").toLowerCase().includes(kw) ||
+      (r.students || []).some((s: any) =>
+        (s.name_cn || "").includes(kw) || (s.name_en || "").toLowerCase().includes(kw)
+      )
+    );
+  }
+  if (filterFloor.value) list = list.filter(r => r.floor === filterFloor.value);
+  if (filterStatus.value) list = list.filter(r => r.status === filterStatus.value);
+  return list;
+});
 
 const form = reactive({
   id: null as number | null,
@@ -176,9 +217,7 @@ function openDialog(title?: string, row?: any) {
     form.current_occupancy = row.current_occupancy ?? 0;
     form.status = row.status || "available";
     form.notes = row.notes || "";
-    form.guest_student_ids = Array.isArray(row.students)
-      ? row.students.map((s: any) => s.id)
-      : [];
+    form.guest_student_ids = Array.isArray(row.students) ? row.students.map((s: any) => s.id) : [];
   } else {
     form.guest_student_ids = [];
   }
@@ -201,11 +240,7 @@ async function onSubmit() {
   await nextTick();
   const formEl = formRef.value;
   if (formEl) {
-    try {
-      await formEl.validate();
-    } catch (_) {
-      return;
-    }
+    try { await formEl.validate(); } catch (_) { return; }
   }
   submitLoading.value = true;
   try {
@@ -240,9 +275,7 @@ async function onSubmit() {
       const created = (res as any)?.data;
       if (created) {
         if (form.guest_student_ids && form.guest_student_ids.length > 0) {
-          try {
-            await roomApi.setStudents(created.id, form.guest_student_ids);
-          } catch (_) {}
+          try { await roomApi.setStudents(created.id, form.guest_student_ids); } catch (_) {}
         }
         dataList.value = [created, ...(dataList.value || [])];
       }
@@ -251,8 +284,7 @@ async function onSubmit() {
     dialogVisible.value = false;
     loadList(true);
   } catch (e: any) {
-    const msg = e?.response?.data?.message || e?.message || "Request failed";
-    message(msg, { type: "error" });
+    message(e?.response?.data?.message || e?.message || "Request failed", { type: "error" });
   } finally {
     submitLoading.value = false;
   }

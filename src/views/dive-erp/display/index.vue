@@ -229,10 +229,11 @@ async function loadRooms() {
     const res = await displayApi.roomsStatus();
     const byFloor = (res as any)?.roomsByFloor || {};
     const stats = (res as any)?.statistics || {};
-    rooms.value = [...(byFloor.A || []), ...(byFloor.B || [])];
-    roomSummary.total = Number(stats.total) ?? rooms.value.length;
-    roomSummary.occupied = Number(stats.occupied) ?? 0;
-    roomSummary.available = Number(stats.available) ?? rooms.value.length;
+    // 动态合并所有楼层，不硬编码 A/B
+    rooms.value = Object.values(byFloor).flat() as any[];
+    roomSummary.total = Number(stats.total) || rooms.value.length;
+    roomSummary.occupied = Number(stats.occupied) || 0;
+    roomSummary.available = Number(stats.available) || 0;
   } catch (_) {
     try {
       const fallback = await roomApi.status();
@@ -241,8 +242,8 @@ async function loadRooms() {
       rooms.value = Array.isArray(list) ? list : [];
       const sum = d?.summary || {};
       roomSummary.total = rooms.value.length;
-      roomSummary.occupied = Number(sum.occupied) ?? 0;
-      roomSummary.available = Number(sum.available) ?? rooms.value.length;
+      roomSummary.occupied = Number(sum.occupied) || 0;
+      roomSummary.available = Number(sum.available) || rooms.value.length;
     } catch (_2) {
       rooms.value = [];
     }
@@ -272,7 +273,7 @@ onMounted(() => {
   tick();
   tickTimer = setInterval(tick, 1000);
   loadData();
-  refreshTimer = setInterval(loadData, 15000);
+  refreshTimer = setInterval(loadData, 60000);
   document.addEventListener("fullscreenchange", onFullscreenChange);
 });
 

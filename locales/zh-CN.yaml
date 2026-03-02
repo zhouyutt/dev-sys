@@ -268,6 +268,8 @@ diveErp:
     required: 必填
     loading: 加载中...
     noData: 暂无数据
+    search: 搜索...
+    total: 共
   guests:
     title: 客人管理
     addGuest: "+ 新增客人"
@@ -290,6 +292,15 @@ diveErp:
     loadFailed: 加载客人失败
     englishName: 英文姓名
     chineseName: 中文姓名
+    nationality: 国籍
+    birthDate: 出生日期
+    passportExpiry: 护照有效期
+    emergencyContact: 紧急联系人
+    emergencyPhone: 紧急联系电话
+    checkIn: 入住日期
+    checkOut: 离店日期
+    tripHistory: 行程记录
+    noTrips: 暂无行程记录
   rooms:
     title: 房间管理
     addRoom: "+ 新增房间"
@@ -328,6 +339,7 @@ diveErp:
     selectDate: 选择日期
     selectDestination: 目的地
     departureTime: 出发时间
+    maxParticipants: 最大人数
   staff:
     title: 员工管理
     addStaff: "+ 新增员工"

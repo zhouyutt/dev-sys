@@ -1,20 +1,43 @@
 <template>
-  <div class="main p-4">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-lg font-semibold">{{ t("diveErp.boats.title") }}</h2>
+  <div class="main flex flex-col h-full p-4 gap-3">
+    <!-- 顶部工具栏 -->
+    <div class="flex flex-wrap items-center gap-2">
+      <el-input
+        v-model="searchText"
+        :placeholder="t('diveErp.common.search')"
+        clearable
+        style="width: 220px"
+      >
+        <template #prefix><el-icon><Search /></el-icon></template>
+      </el-input>
+      <el-select v-model="filterType" clearable :placeholder="t('diveErp.boats.type')" style="width: 110px">
+        <el-option :label="t('diveErp.boats.small')" value="small" />
+        <el-option :label="t('diveErp.boats.large')" value="large" />
+      </el-select>
+      <el-select v-model="filterStatus" clearable :placeholder="t('diveErp.common.status')" style="width: 120px">
+        <el-option :label="t('diveErp.boats.available')" value="available" />
+        <el-option :label="t('diveErp.boats.inUse')" value="in_use" />
+        <el-option :label="t('diveErp.rooms.maintenance')" value="maintenance" />
+      </el-select>
+      <span class="text-gray-400 text-sm ml-1">{{ t('diveErp.common.total') }}: {{ filteredList.length }}</span>
+      <div class="flex-1" />
       <el-button type="primary" @click="openDialog()">{{ t("diveErp.boats.addBoat") }}</el-button>
     </div>
+
+    <!-- 表格 -->
     <el-table
       v-loading="loading"
-      :data="dataList"
+      :data="filteredList"
       border
       stripe
       style="width: 100%"
+      class="flex-1"
+      height="100%"
       :header-cell-style="{ background: 'var(--el-fill-color-light)' }"
     >
       <el-table-column prop="id" :label="t('diveErp.common.id')" width="70" align="center" />
       <el-table-column prop="boat_number" :label="t('diveErp.boats.boatNo')" width="100" />
-      <el-table-column prop="boat_name" :label="t('diveErp.boats.boatName')" min-width="120" />
+      <el-table-column prop="boat_name" :label="t('diveErp.boats.boatName')" min-width="140" />
       <el-table-column :label="t('diveErp.boats.type')" width="90" align="center">
         <template #default="{ row }">
           {{ row.boat_type?.toLowerCase() === "large" ? t("diveErp.boats.large") : t("diveErp.boats.small") }}
@@ -23,13 +46,13 @@
       <el-table-column prop="max_capacity" :label="t('diveErp.boats.capacity')" width="90" align="center" />
       <el-table-column prop="status" :label="t('diveErp.common.status')" width="110" align="center">
         <template #default="{ row }">
-          <el-tag :type="row.status === 'available' ? 'success' : 'info'" size="small">
+          <el-tag :type="row.status === 'available' ? 'success' : row.status === 'maintenance' ? 'warning' : 'info'" size="small">
             {{ row.status || "available" }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="notes" :label="t('diveErp.common.notes')" min-width="120" show-overflow-tooltip />
-      <el-table-column :label="t('diveErp.common.actions')" width="160" fixed="right" align="center">
+      <el-table-column prop="notes" :label="t('diveErp.common.notes')" min-width="150" show-overflow-tooltip />
+      <el-table-column :label="t('diveErp.common.actions')" width="140" fixed="right" align="center">
         <template #default="{ row }">
           <el-button link type="primary" size="small" @click="openDialog('Edit', row)">{{ t("diveErp.common.edit") }}</el-button>
           <el-popconfirm :title="t('diveErp.boats.deleteConfirm')" @confirm="handleDelete(row)">
@@ -41,6 +64,7 @@
       </el-table-column>
     </el-table>
 
+    <!-- 编辑/新增弹窗 -->
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? t('diveErp.boats.editBoat') : t('diveErp.boats.addBoat')"
@@ -56,7 +80,7 @@
           <el-input v-model="form.boat_name" placeholder="e.g. 1311小船" />
         </el-form-item>
         <el-form-item :label="t('diveErp.boats.type')" prop="boat_type">
-          <el-select v-model="form.boat_type" :placeholder="t('diveErp.boats.type')" style="width: 100%">
+          <el-select v-model="form.boat_type" style="width: 100%">
             <el-option :label="t('diveErp.boats.small')" value="small" />
             <el-option :label="t('diveErp.boats.large')" value="large" />
           </el-select>
@@ -65,10 +89,10 @@
           <el-input-number v-model="form.max_capacity" :min="1" :max="50" />
         </el-form-item>
         <el-form-item :label="t('diveErp.common.status')" prop="status">
-          <el-select v-model="form.status" :placeholder="t('diveErp.common.status')" style="width: 100%">
+          <el-select v-model="form.status" style="width: 100%">
             <el-option :label="t('diveErp.boats.available')" value="available" />
             <el-option :label="t('diveErp.boats.inUse')" value="in_use" />
-            <el-option :label="t('diveErp.boats.maintenance')" value="maintenance" />
+            <el-option :label="t('diveErp.rooms.maintenance')" value="maintenance" />
           </el-select>
         </el-form-item>
         <el-form-item :label="t('diveErp.common.notes')" prop="notes">
@@ -84,8 +108,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
+import { Search } from "@element-plus/icons-vue";
 import { message } from "@/utils/message";
 import { boatApi } from "@/api/dive";
 
@@ -99,6 +124,26 @@ const dialogVisible = ref(false);
 const isEdit = ref(false);
 const submitLoading = ref(false);
 const formRef = ref();
+
+// 搜索和筛选
+const searchText = ref("");
+const filterType = ref("");
+const filterStatus = ref("");
+
+const filteredList = computed(() => {
+  let list = dataList.value;
+  const kw = searchText.value.trim().toLowerCase();
+  if (kw) {
+    list = list.filter(r =>
+      (r.boat_number || "").toLowerCase().includes(kw) ||
+      (r.boat_name || "").toLowerCase().includes(kw) ||
+      (r.notes || "").toLowerCase().includes(kw)
+    );
+  }
+  if (filterType.value) list = list.filter(r => (r.boat_type || "").toLowerCase() === filterType.value);
+  if (filterStatus.value) list = list.filter(r => r.status === filterStatus.value);
+  return list;
+});
 
 const form = reactive({
   id: null as number | null,

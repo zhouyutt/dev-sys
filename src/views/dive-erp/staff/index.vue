@@ -1,37 +1,60 @@
 <template>
-  <div class="main p-4">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-lg font-semibold">{{ t("diveErp.staff.title") }}</h2>
+  <div class="main flex flex-col h-full p-4 gap-3">
+    <!-- 顶部工具栏 -->
+    <div class="flex flex-wrap items-center gap-2">
+      <el-input
+        v-model="searchText"
+        :placeholder="t('diveErp.common.search')"
+        clearable
+        style="width: 220px"
+      >
+        <template #prefix><el-icon><Search /></el-icon></template>
+      </el-input>
+      <el-select v-model="filterRole" clearable :placeholder="t('diveErp.staff.role')" style="width: 120px">
+        <el-option :label="t('diveErp.staff.captain')" value="captain" />
+        <el-option :label="t('diveErp.staff.diveMaster')" value="dm" />
+        <el-option :label="t('diveErp.staff.instructor')" value="instructor" />
+        <el-option :label="t('diveErp.staff.staffRole')" value="staff" />
+      </el-select>
+      <el-select v-model="filterStatus" clearable :placeholder="t('diveErp.common.status')" style="width: 110px">
+        <el-option :label="t('diveErp.staff.active')" value="active" />
+        <el-option :label="t('diveErp.staff.inactive')" value="inactive" />
+        <el-option :label="t('diveErp.staff.onLeave')" value="on_leave" />
+      </el-select>
+      <span class="text-gray-400 text-sm ml-1">{{ t('diveErp.common.total') }}: {{ filteredList.length }}</span>
+      <div class="flex-1" />
       <el-button type="primary" @click="openDialog()">{{ t("diveErp.staff.addStaff") }}</el-button>
     </div>
+
+    <!-- 表格 -->
     <el-table
       v-loading="loading"
-      :data="dataList"
+      :data="filteredList"
       border
       stripe
       style="width: 100%"
+      class="flex-1"
+      height="100%"
       :header-cell-style="{ background: 'var(--el-fill-color-light)' }"
     >
       <el-table-column prop="id" :label="t('diveErp.common.id')" width="70" align="center" />
       <el-table-column prop="name_en" :label="t('diveErp.staff.nameEn')" min-width="110" />
       <el-table-column prop="name" :label="t('diveErp.staff.nameCn')" min-width="110" />
       <el-table-column :label="t('diveErp.staff.role')" width="120" align="center">
-        <template #default="{ row }">
-          {{ roleLabel(row.role) }}
-        </template>
+        <template #default="{ row }">{{ roleLabel(row.role) }}</template>
       </el-table-column>
-      <el-table-column :label="t('diveErp.staff.certification')" width="120" align="center">
+      <el-table-column :label="t('diveErp.staff.certification')" width="130" align="center">
         <template #default="{ row }">
           {{ Array.isArray(row.certifications) ? row.certifications.join(", ") : row.certifications || "-" }}
         </template>
       </el-table-column>
-      <el-table-column :label="t('diveErp.staff.languages')" width="140" align="center">
+      <el-table-column :label="t('diveErp.staff.languages')" width="130" align="center">
         <template #default="{ row }">
           {{ Array.isArray(row.languages) ? row.languages.join(", ") : row.languages || "-" }}
         </template>
       </el-table-column>
       <el-table-column prop="phone" :label="t('diveErp.common.phone')" width="130" />
-      <el-table-column prop="email" :label="t('diveErp.common.email')" min-width="140" show-overflow-tooltip />
+      <el-table-column prop="email" :label="t('diveErp.common.email')" min-width="150" show-overflow-tooltip />
       <el-table-column prop="hire_date" :label="t('diveErp.staff.hireDate')" width="110" align="center" />
       <el-table-column prop="status" :label="t('diveErp.common.status')" width="90" align="center">
         <template #default="{ row }">
@@ -40,7 +63,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column :label="t('diveErp.common.actions')" width="160" fixed="right" align="center">
+      <el-table-column :label="t('diveErp.common.actions')" width="140" fixed="right" align="center">
         <template #default="{ row }">
           <el-button link type="primary" size="small" @click="openDialog('Edit', row)">{{ t("diveErp.common.edit") }}</el-button>
           <el-popconfirm :title="t('diveErp.staff.deleteConfirm')" @confirm="handleDelete(row)">
@@ -52,6 +75,7 @@
       </el-table-column>
     </el-table>
 
+    <!-- 编辑/新增弹窗 -->
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? t('diveErp.staff.editStaff') : t('diveErp.staff.addStaff')"
@@ -67,7 +91,7 @@
           <el-input v-model="form.name" placeholder="中文姓名" />
         </el-form-item>
         <el-form-item :label="t('diveErp.staff.role')" prop="role">
-          <el-select v-model="form.role" :placeholder="t('diveErp.staff.role')" style="width: 100%">
+          <el-select v-model="form.role" style="width: 100%">
             <el-option :label="t('diveErp.staff.captain')" value="captain" />
             <el-option :label="t('diveErp.staff.diveMaster')" value="dm" />
             <el-option :label="t('diveErp.staff.instructor')" value="instructor" />
@@ -84,7 +108,7 @@
           <el-date-picker v-model="form.hire_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
         </el-form-item>
         <el-form-item :label="t('diveErp.common.status')" prop="status">
-          <el-select v-model="form.status" :placeholder="t('diveErp.common.status')" style="width: 100%">
+          <el-select v-model="form.status" style="width: 100%">
             <el-option :label="t('diveErp.staff.active')" value="active" />
             <el-option :label="t('diveErp.staff.inactive')" value="inactive" />
             <el-option :label="t('diveErp.staff.onLeave')" value="on_leave" />
@@ -103,8 +127,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
+import { Search } from "@element-plus/icons-vue";
 import { message } from "@/utils/message";
 import { staffApi } from "@/api/dive";
 
@@ -128,6 +153,28 @@ const dialogVisible = ref(false);
 const isEdit = ref(false);
 const submitLoading = ref(false);
 const formRef = ref();
+
+// 搜索和筛选
+const searchText = ref("");
+const filterRole = ref("");
+const filterStatus = ref("");
+
+const filteredList = computed(() => {
+  let list = dataList.value;
+  const kw = searchText.value.trim().toLowerCase();
+  if (kw) {
+    list = list.filter(r =>
+      (r.name_en || "").toLowerCase().includes(kw) ||
+      (r.name || "").toLowerCase().includes(kw) ||
+      (r.phone || "").toLowerCase().includes(kw) ||
+      (r.email || "").toLowerCase().includes(kw) ||
+      (r.role || "").toLowerCase().includes(kw)
+    );
+  }
+  if (filterRole.value) list = list.filter(r => r.role === filterRole.value);
+  if (filterStatus.value) list = list.filter(r => r.status === filterStatus.value);
+  return list;
+});
 
 const form = reactive({
   id: null as number | null,
