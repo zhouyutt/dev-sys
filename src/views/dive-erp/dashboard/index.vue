@@ -138,6 +138,7 @@ const fixedIslands = [
 ];
 
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
+let tickTimer: ReturnType<typeof setInterval> | null = null;
 const loadingTrips = ref(true);
 const loadingRooms = ref(true);
 const currentDate = ref("");
@@ -237,7 +238,7 @@ async function loadRooms() {
 
 onMounted(() => {
   tick();
-  setInterval(tick, 1000);
+  tickTimer = setInterval(tick, 1000);
   loadTrips();
   loadRooms();
   refreshTimer = setInterval(() => {
@@ -247,6 +248,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  if (tickTimer) clearInterval(tickTimer);
   if (refreshTimer) clearInterval(refreshTimer);
 });
 </script>

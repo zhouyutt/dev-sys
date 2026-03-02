@@ -80,6 +80,9 @@
         <el-form-item :label="t('diveErp.common.email')" prop="email">
           <el-input v-model="form.email" placeholder="email@example.com" />
         </el-form-item>
+        <el-form-item :label="t('diveErp.staff.hireDate')" prop="hire_date">
+          <el-date-picker v-model="form.hire_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+        </el-form-item>
         <el-form-item :label="t('diveErp.common.status')" prop="status">
           <el-select v-model="form.status" :placeholder="t('diveErp.common.status')" style="width: 100%">
             <el-option :label="t('diveErp.staff.active')" value="active" />
@@ -133,6 +136,7 @@ const form = reactive({
   role: "instructor",
   phone: "",
   email: "",
+  hire_date: "",
   status: "active",
   notes: ""
 });
@@ -163,6 +167,7 @@ function openDialog(_title?: string, row?: any) {
     form.role = row.role;
     form.phone = row.phone || "";
     form.email = row.email || "";
+    form.hire_date = row.hire_date || "";
     form.status = row.status || "active";
     form.notes = row.notes || "";
   }
@@ -176,6 +181,7 @@ function resetForm() {
   form.role = "instructor";
   form.phone = "";
   form.email = "";
+  form.hire_date = "";
   form.status = "active";
   form.notes = "";
 }
@@ -194,6 +200,7 @@ async function onSubmit() {
       role: form.role,
       phone: form.phone,
       email: form.email,
+      hire_date: form.hire_date || null,
       status: form.status,
       notes: form.notes
     };

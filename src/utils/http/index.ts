@@ -73,7 +73,7 @@ class PureHttp {
           return config;
         }
         /** 请求白名单，放置一些不需要`token`的接口（通过设置请求白名单，防止`token`过期后再请求造成的死循环问题） */
-        const whiteList = ["/refresh-token", "/auth/refresh-token", "/login", "/auth/login", "/enrollment"];
+        const whiteList = ["/refresh-token", "/auth/refresh-token", "/login", "/auth/login", "/enrollment", "/students/enroll", "/enrollment/submit", "/enrollment/upload-passport"];
         const fullUrl = config.url ?? "";
         if (fullUrl.includes("/display")) return config;
         return whiteList.some(url => fullUrl.endsWith(url))

@@ -17,7 +17,7 @@
       <el-table-column prop="boat_name" :label="t('diveErp.boats.boatName')" min-width="120" />
       <el-table-column :label="t('diveErp.boats.type')" width="90" align="center">
         <template #default="{ row }">
-          {{ row.boat_type === "large" ? t("diveErp.boats.large") : t("diveErp.boats.small") }}
+          {{ row.boat_type?.toLowerCase() === "large" ? t("diveErp.boats.large") : t("diveErp.boats.small") }}
         </template>
       </el-table-column>
       <el-table-column prop="max_capacity" :label="t('diveErp.boats.capacity')" width="90" align="center" />

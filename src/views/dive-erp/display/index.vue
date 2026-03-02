@@ -165,6 +165,7 @@ const rooms = ref<any[]>([]);
 const roomSummary = reactive({ total: 0, occupied: 0, available: 0 });
 
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
+let tickTimer: ReturnType<typeof setInterval> | null = null;
 
 function islandTrips(key: string) {
   return islandsData.value[key] || [];
@@ -220,7 +221,6 @@ async function loadTrips() {
   } catch (_) {
     islandsData.value = {};
   }
-  loading.value = false;
 }
 
 async function loadRooms() {
@@ -253,27 +253,33 @@ async function loadRooms() {
 async function loadData() {
   loading.value = true;
   await Promise.all([loadTrips(), loadRooms()]);
+  loading.value = false;
 }
 
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
     screenRef.value?.requestFullscreen?.();
-    isFullscreen.value = true;
   } else {
     document.exitFullscreen?.();
-    isFullscreen.value = false;
   }
+}
+
+function onFullscreenChange() {
+  isFullscreen.value = !!document.fullscreenElement;
 }
 
 onMounted(() => {
   tick();
-  setInterval(tick, 1000);
+  tickTimer = setInterval(tick, 1000);
   loadData();
   refreshTimer = setInterval(loadData, 15000);
+  document.addEventListener("fullscreenchange", onFullscreenChange);
 });
 
 onUnmounted(() => {
+  if (tickTimer) clearInterval(tickTimer);
   if (refreshTimer) clearInterval(refreshTimer);
+  document.removeEventListener("fullscreenchange", onFullscreenChange);
   if (document.fullscreenElement) document.exitFullscreen?.();
 });
 </script>

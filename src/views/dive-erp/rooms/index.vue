@@ -238,7 +238,14 @@ async function onSubmit() {
         notes: form.notes
       });
       const created = (res as any)?.data;
-      if (created) dataList.value = [created, ...(dataList.value || [])];
+      if (created) {
+        if (form.guest_student_ids && form.guest_student_ids.length > 0) {
+          try {
+            await roomApi.setStudents(created.id, form.guest_student_ids);
+          } catch (_) {}
+        }
+        dataList.value = [created, ...(dataList.value || [])];
+      }
       message(t("diveErp.common.add") + " OK");
     }
     dialogVisible.value = false;
