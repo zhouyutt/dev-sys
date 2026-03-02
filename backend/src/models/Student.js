@@ -46,7 +46,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(100),
       allowNull: true,
       validate: {
-        isEmail: true
+        isEmailOrEmpty(value) {
+          if (value !== null && value !== '' && value !== undefined) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+              throw new Error('Invalid email format');
+            }
+          }
+        }
       }
     },
     wechat: {

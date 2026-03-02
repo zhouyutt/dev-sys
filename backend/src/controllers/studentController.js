@@ -2,8 +2,10 @@ const { Student, Course, Room, Staff, EquipmentAssignment, Equipment, Trip, Trip
 const { extractPassportInfo } = require('../utils/passport');
 const { Op } = require('sequelize');
 
-function generateGuestId() {
-  return 'G' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 8).toUpperCase();
+async function generateGuestId() {
+  const count = await Student.count();
+  const num = (count + 1).toString().padStart(5, '0');
+  return 'G' + num;
 }
 
 // 获取所有学员
@@ -102,8 +104,11 @@ exports.createStudent = async (req, res) => {
     }
 
     if (!studentData.guest_id) {
-      studentData.guest_id = generateGuestId();
+      studentData.guest_id = await generateGuestId();
     }
+    // 空字符串转 null，避免触发 isEmail 等验证器
+    if (studentData.email === '') studentData.email = null;
+    if (studentData.wechat === '') studentData.wechat = null;
     const student = await Student.create(studentData);
 
     const isEnroll = req.path === '/enroll' || (req.baseUrl && req.baseUrl.includes('enroll'));
@@ -183,23 +188,61 @@ exports.updateStudent = async (req, res) => {
 
 // 删除学员
 exports.deleteStudent = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
-    const student = await Student.findByPk(req.params.id);
+    const student = await Student.findByPk(req.params.id, { transaction: t });
 
     if (!student) {
+      await t.rollback();
       return res.status(404).json({
         success: false,
         message: '学员不存在'
       });
     }
 
-    await student.destroy();
+    // 1. 找出该学员参与的所有行程，更新行程的 current_participants 计数
+    const participations = await TripParticipant.findAll({
+      where: { student_id: student.id, status: 'confirmed' },
+      transaction: t
+    });
+    for (const p of participations) {
+      await Trip.update(
+        { current_participants: sequelize.literal('GREATEST(current_participants - 1, 0)') },
+        { where: { id: p.trip_id }, transaction: t }
+      );
+    }
+
+    // 2. 删除所有行程参与记录
+    await TripParticipant.destroy({
+      where: { student_id: student.id },
+      transaction: t
+    });
+
+    // 3. 删除装备分配记录
+    await EquipmentAssignment.destroy({
+      where: { student_id: student.id },
+      transaction: t
+    });
+
+    // 4. 如果学员有房间，减少房间入住计数
+    if (student.room_id) {
+      await Room.update(
+        { current_occupancy: sequelize.literal('GREATEST(current_occupancy - 1, 0)') },
+        { where: { id: student.room_id }, transaction: t }
+      );
+    }
+
+    // 5. 删除学员
+    await student.destroy({ transaction: t });
+
+    await t.commit();
 
     res.json({
       success: true,
       message: '删除成功'
     });
   } catch (error) {
+    await t.rollback();
     console.error('删除学员失败:', error);
     res.status(500).json({
       success: false,

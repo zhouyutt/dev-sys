@@ -1,4 +1,10 @@
 const { Student } = require('../models');
+
+async function generateGuestId() {
+  const count = await Student.count();
+  const num = (count + 1).toString().padStart(5, '0');
+  return 'G' + num;
+}
 const QRCode = require('qrcode');
 const path = require('path');
 const fs = require('fs');
@@ -112,15 +118,17 @@ exports.submitEnrollment = async (req, res) => {
     }
 
     // 创建新学生记录
+    const guestId = await generateGuestId();
     const student = await Student.create({
+      guest_id: guestId,
       name_en: name_en || name_cn,
       name_cn: name_cn || name_en,
       gender: gender || 'male',
       birth_date,
       nationality: nationality || 'China',
       phone,
-      email,
-      wechat,
+      email: email || null,
+      wechat: wechat || null,
       passport_number,
       passport_expiry,
       emergency_contact,

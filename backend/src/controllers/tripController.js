@@ -1,4 +1,4 @@
-const { Trip, Boat, Staff, TripParticipant, Student, Room, sequelize } = require('../models');
+const { Trip, Boat, Staff, TripParticipant, TripStaff, Student, Room, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 // 获取所有行程
@@ -18,6 +18,11 @@ exports.getAllTrips = async (req, res) => {
         { model: Staff, as: 'captain', attributes: ['id', 'name', 'name_en'] },
         { model: Staff, as: 'dm', attributes: ['id', 'name', 'name_en'] },
         { model: Staff, as: 'instructor', attributes: ['id', 'name', 'name_en'] },
+        {
+          model: TripStaff,
+          as: 'tripStaff',
+          include: [{ model: Staff, as: 'staff', attributes: ['id', 'name', 'name_en', 'role'] }]
+        },
         { 
           model: TripParticipant, 
           as: 'participants',
@@ -112,6 +117,11 @@ exports.getTripById = async (req, res) => {
         { model: Staff, as: 'captain' },
         { model: Staff, as: 'dm' },
         { model: Staff, as: 'instructor' },
+        {
+          model: TripStaff,
+          as: 'tripStaff',
+          include: [{ model: Staff, as: 'staff', attributes: ['id', 'name', 'name_en', 'role'] }]
+        },
         { 
           model: TripParticipant, 
           as: 'participants',
@@ -142,8 +152,25 @@ exports.getTripById = async (req, res) => {
 
 // 创建行程
 exports.createTrip = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
-    const trip = await Trip.create(req.body);
+    const { dm_ids, instructor_ids, ...tripData } = req.body;
+    const trip = await Trip.create(tripData, { transaction: t });
+
+    // 保存多DM
+    if (Array.isArray(dm_ids) && dm_ids.length > 0) {
+      for (const staffId of dm_ids) {
+        await TripStaff.create({ trip_id: trip.id, staff_id: staffId, role: 'dm' }, { transaction: t });
+      }
+    }
+    // 保存多教练
+    if (Array.isArray(instructor_ids) && instructor_ids.length > 0) {
+      for (const staffId of instructor_ids) {
+        await TripStaff.create({ trip_id: trip.id, staff_id: staffId, role: 'instructor' }, { transaction: t });
+      }
+    }
+
+    await t.commit();
 
     res.status(201).json({
       success: true,
@@ -151,6 +178,7 @@ exports.createTrip = async (req, res) => {
       data: trip
     });
   } catch (error) {
+    await t.rollback();
     console.error('创建行程失败:', error);
     res.status(500).json({
       success: false,
@@ -162,17 +190,37 @@ exports.createTrip = async (req, res) => {
 
 // 更新行程
 exports.updateTrip = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
-    const trip = await Trip.findByPk(req.params.id);
+    const trip = await Trip.findByPk(req.params.id, { transaction: t });
 
     if (!trip) {
+      await t.rollback();
       return res.status(404).json({
         success: false,
         message: '行程不存在'
       });
     }
 
-    await trip.update(req.body);
+    const { dm_ids, instructor_ids, ...tripData } = req.body;
+    await trip.update(tripData, { transaction: t });
+
+    // 更新多DM：先删除旧的，再插入新的
+    if (Array.isArray(dm_ids)) {
+      await TripStaff.destroy({ where: { trip_id: trip.id, role: 'dm' }, transaction: t });
+      for (const staffId of dm_ids) {
+        await TripStaff.create({ trip_id: trip.id, staff_id: staffId, role: 'dm' }, { transaction: t });
+      }
+    }
+    // 更新多教练
+    if (Array.isArray(instructor_ids)) {
+      await TripStaff.destroy({ where: { trip_id: trip.id, role: 'instructor' }, transaction: t });
+      for (const staffId of instructor_ids) {
+        await TripStaff.create({ trip_id: trip.id, staff_id: staffId, role: 'instructor' }, { transaction: t });
+      }
+    }
+
+    await t.commit();
 
     res.json({
       success: true,
@@ -180,6 +228,7 @@ exports.updateTrip = async (req, res) => {
       data: trip
     });
   } catch (error) {
+    await t.rollback();
     console.error('更新行程失败:', error);
     res.status(500).json({
       success: false,

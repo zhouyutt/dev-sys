@@ -3,13 +3,9 @@ const { Room, Student, sequelize } = require('../models');
 // 获取所有房间
 exports.getAllRooms = async (req, res) => {
   try {
-    const { status, floor } = req.query;
-    
+    const { floor } = req.query;
     const where = {};
-    if (status) where.status = status;
     if (floor) where.floor = floor;
-
-    console.log('[Room Controller] Fetching rooms with where:', where);
 
     const rooms = await Room.findAll({
       where,
@@ -19,15 +15,23 @@ exports.getAllRooms = async (req, res) => {
       order: [['floor', 'ASC'], ['room_number', 'ASC']]
     });
 
-    console.log('[Room Controller] Found', rooms.length, 'rooms');
+    // 根据实际关联学员数修正 status 和 current_occupancy，保持与大屏一致
+    const corrected = rooms.map(room => {
+      const data = room.toJSON();
+      const actualCount = (data.students || []).length;
+      data.current_occupancy = actualCount;
+      if (data.status !== 'maintenance') {
+        data.status = actualCount > 0 ? 'occupied' : 'available';
+      }
+      return data;
+    });
 
     res.json({
       success: true,
-      data: rooms
+      data: corrected
     });
   } catch (error) {
-    console.error('[Room Controller] Get rooms failed:', error);
-    console.error('[Room Controller] Error stack:', error.stack);
+    console.error('Get rooms failed:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get rooms',
@@ -91,7 +95,9 @@ exports.createRoom = async (req, res) => {
 // 更新房间
 exports.updateRoom = async (req, res) => {
   try {
-    const room = await Room.findByPk(req.params.id);
+    const room = await Room.findByPk(req.params.id, {
+      include: [{ model: Student, as: 'students', attributes: ['id'], required: false }]
+    });
 
     if (!room) {
       return res.status(404).json({
@@ -100,12 +106,26 @@ exports.updateRoom = async (req, res) => {
       });
     }
 
-    await room.update(req.body);
+    // 计算实际住客数，强制同步 status 和 current_occupancy，忽略前端传来的这两个字段
+    const actualCount = (room.students || []).length;
+    const body = { ...req.body };
+    body.current_occupancy = actualCount;
+    if (body.status !== 'maintenance') {
+      body.status = actualCount > 0 ? 'occupied' : 'available';
+    }
+
+    await room.update(body);
+
+    const fresh = await Room.findByPk(room.id, {
+      include: [{ model: Student, as: 'students', attributes: ['id', 'name_cn', 'name_en'], required: false }]
+    });
+    const data = fresh.toJSON();
+    data.current_occupancy = actualCount;
 
     res.json({
       success: true,
       message: '更新成功',
-      data: room
+      data
     });
   } catch (error) {
     console.error('更新房间失败:', error);
@@ -245,7 +265,12 @@ exports.getRoomStatus = async (req, res) => {
     };
 
     rooms.forEach(room => {
-      statusSummary[room.status]++;
+      const actualCount = (room.students || []).length;
+      room.current_occupancy = actualCount;
+      if (room.status !== 'maintenance') {
+        room.status = actualCount > 0 ? 'occupied' : 'available';
+      }
+      statusSummary[room.status] = (statusSummary[room.status] || 0) + 1;
     });
 
     res.json({
