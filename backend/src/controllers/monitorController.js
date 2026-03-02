@@ -1,4 +1,4 @@
-const { User, Student, Trip, Room, Staff, Boat, sequelize } = require('../models');
+const { User, Student, Trip, Room, Staff, Boat, Role, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const os = require('os');
 

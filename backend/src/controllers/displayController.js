@@ -228,8 +228,8 @@ exports.getRoomsStatus = async (req, res) => {
       order: [['room_number', 'ASC']]
     });
 
-    // 按楼层分组，并根据实际关联学生数实时计算状态
-    const roomsByFloor = { 'A': [], 'B': [] };
+    // 按楼层动态分组，并根据实际关联学生数实时计算状态
+    const roomsByFloor = {};
 
     rooms.forEach(room => {
       const roomData = room.toJSON();
@@ -239,14 +239,14 @@ exports.getRoomsStatus = async (req, res) => {
       if (room.status !== 'maintenance') {
         roomData.status = studentCount > 0 ? 'occupied' : 'available';
       }
-      if (roomsByFloor[room.floor]) {
-        roomsByFloor[room.floor].push(roomData);
-      }
+      const floor = room.floor || 'Other';
+      if (!roomsByFloor[floor]) roomsByFloor[floor] = [];
+      roomsByFloor[floor].push(roomData);
     });
 
     const totalRooms = rooms.length;
-    const occupiedRooms = roomsByFloor['A'].concat(roomsByFloor['B'])
-      .filter(r => r.status === 'occupied').length;
+    const allRoomsList = Object.values(roomsByFloor).flat();
+    const occupiedRooms = allRoomsList.filter(r => r.status === 'occupied').length;
     const availableRooms = totalRooms - occupiedRooms;
 
     res.set('Cache-Control', 'no-store');

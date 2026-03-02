@@ -1,4 +1,4 @@
-const { Student, Course, Room, Staff, EquipmentAssignment, Equipment, Trip, TripParticipant, Boat } = require('../models');
+const { Student, Course, Room, Staff, EquipmentAssignment, Equipment, Trip, TripParticipant, Boat, sequelize } = require('../models');
 const { extractPassportInfo } = require('../utils/passport');
 const { Op } = require('sequelize');
 
@@ -210,19 +210,22 @@ exports.deleteStudent = async (req, res) => {
 
 // 分配房间
 exports.assignRoom = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const { room_id, check_in_date, check_out_date } = req.body;
-    const student = await Student.findByPk(req.params.id);
+    const student = await Student.findByPk(req.params.id, { transaction: t });
 
     if (!student) {
+      await t.rollback();
       return res.status(404).json({
         success: false,
         message: '学员不存在'
       });
     }
 
-    const room = await Room.findByPk(room_id);
+    const room = await Room.findByPk(room_id, { lock: true, transaction: t });
     if (!room) {
+      await t.rollback();
       return res.status(404).json({
         success: false,
         message: '房间不存在'
@@ -230,20 +233,36 @@ exports.assignRoom = async (req, res) => {
     }
 
     if (room.current_occupancy >= room.max_capacity) {
+      await t.rollback();
       return res.status(400).json({
         success: false,
         message: '房间已满'
       });
     }
 
-    // 更新学员的房间信息
-    await student.update({ room_id, check_in_date, check_out_date });
+    // 如果学员已有房间，先减少旧房间的入住计数
+    if (student.room_id && student.room_id !== room_id) {
+      const oldRoom = await Room.findByPk(student.room_id, { lock: true, transaction: t });
+      if (oldRoom) {
+        await oldRoom.update({
+          current_occupancy: Math.max(0, oldRoom.current_occupancy - 1),
+          status: oldRoom.current_occupancy - 1 <= 0 ? 'available' : oldRoom.status
+        }, { transaction: t });
+      }
+    }
 
-    // 更新房间的入住人数
-    await room.update({ 
-      current_occupancy: room.current_occupancy + 1,
-      status: 'occupied'
-    });
+    // 更新学员的房间信息
+    await student.update({ room_id, check_in_date, check_out_date }, { transaction: t });
+
+    // 更新新房间的入住人数（仅当换了新房间时才增加）
+    if (student.room_id !== room_id) {
+      await room.update({
+        current_occupancy: room.current_occupancy + 1,
+        status: 'occupied'
+      }, { transaction: t });
+    }
+
+    await t.commit();
 
     res.json({
       success: true,
@@ -251,6 +270,7 @@ exports.assignRoom = async (req, res) => {
       data: student
     });
   } catch (error) {
+    await t.rollback();
     console.error('分配房间失败:', error);
     res.status(500).json({
       success: false,
