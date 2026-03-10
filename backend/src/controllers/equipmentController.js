@@ -1,4 +1,4 @@
-const { Equipment, EquipmentAssignment, Student } = require('../models');
+const { Equipment, EquipmentAssignment, Student, sequelize } = require('../models');
 
 // 获取所有装备
 exports.getAllEquipment = async (req, res) => {
@@ -139,11 +139,14 @@ exports.deleteEquipment = async (req, res) => {
 
 // 分配装备给学员
 exports.assignEquipment = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const { student_id } = req.body;
-    const equipment = await Equipment.findByPk(req.params.id);
+    // 在事务内加行锁，防止并发分配同一装备
+    const equipment = await Equipment.findByPk(req.params.id, { lock: true, transaction: t });
 
     if (!equipment) {
+      await t.rollback();
       return res.status(404).json({
         success: false,
         message: '装备不存在'
@@ -151,6 +154,7 @@ exports.assignEquipment = async (req, res) => {
     }
 
     if (equipment.status !== 'available') {
+      await t.rollback();
       return res.status(400).json({
         success: false,
         message: '装备不可用'
@@ -161,9 +165,11 @@ exports.assignEquipment = async (req, res) => {
       equipment_id: equipment.id,
       student_id,
       status: 'assigned'
-    });
+    }, { transaction: t });
 
-    await equipment.update({ status: 'in_use' });
+    await equipment.update({ status: 'in_use' }, { transaction: t });
+
+    await t.commit();
 
     res.status(201).json({
       success: true,
@@ -171,6 +177,7 @@ exports.assignEquipment = async (req, res) => {
       data: assignment
     });
   } catch (error) {
+    await t.rollback();
     console.error('分配装备失败:', error);
     res.status(500).json({
       success: false,

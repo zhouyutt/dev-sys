@@ -15,6 +15,7 @@ const Course = require('./Course')(sequelize, DataTypes);
 const Staff = require('./Staff')(sequelize, DataTypes);
 const Trip = require('./Trip')(sequelize, DataTypes);
 const TripParticipant = require('./TripParticipant')(sequelize, DataTypes);
+const TripStaff = require('./TripStaff')(sequelize, DataTypes);
 const Equipment = require('./Equipment')(sequelize, DataTypes);
 const EquipmentAssignment = require('./EquipmentAssignment')(sequelize, DataTypes);
 
@@ -48,14 +49,21 @@ const setupAssociations = () => {
   Trip.belongsTo(Boat, { foreignKey: 'boat_id', as: 'boat' });
   Boat.hasMany(Trip, { foreignKey: 'boat_id', as: 'trips' });
 
-  // 行程与船长的关系
+  // 行程与船长的关系（保留单个船长字段）
   Trip.belongsTo(Staff, { foreignKey: 'captain_id', as: 'captain' });
   
-  // 行程与DM的关系
+  // 行程与DM的关系（旧单字段，保留兼容）
   Trip.belongsTo(Staff, { foreignKey: 'dm_id', as: 'dm' });
   
-  // 行程与教练的关系
+  // 行程与教练的关系（旧单字段，保留兼容）
   Trip.belongsTo(Staff, { foreignKey: 'instructor_id', as: 'instructor' });
+
+  // 行程与员工的多对多关系（新：支持多个DM/教练）
+  Trip.belongsToMany(Staff, { through: TripStaff, foreignKey: 'trip_id', otherKey: 'staff_id', as: 'tripStaffList' });
+  Staff.belongsToMany(Trip, { through: TripStaff, foreignKey: 'staff_id', otherKey: 'trip_id', as: 'staffTrips' });
+  TripStaff.belongsTo(Trip, { foreignKey: 'trip_id', as: 'trip' });
+  TripStaff.belongsTo(Staff, { foreignKey: 'staff_id', as: 'staff' });
+  Trip.hasMany(TripStaff, { foreignKey: 'trip_id', as: 'tripStaff' });
 
   // 行程参与者关联（学员参加行程）
   TripParticipant.belongsTo(Trip, { foreignKey: 'trip_id', as: 'trip' });
@@ -98,6 +106,7 @@ module.exports = {
   Staff,
   Trip,
   TripParticipant,
+  TripStaff,
   Equipment,
   EquipmentAssignment,
   syncDatabase

@@ -21,10 +21,10 @@ router.put('/:id', equipmentController.updateEquipment);
 // 删除装备
 router.delete('/:id', equipmentController.deleteEquipment);
 
+// 归还装备（必须在 /:id/assign 之前注册，避免 /return 被 /:id 拦截）
+router.post('/return', equipmentController.returnEquipment);
+
 // 分配装备给学员
 router.post('/:id/assign', equipmentController.assignEquipment);
-
-// 归还装备
-router.post('/return', equipmentController.returnEquipment);
 
 module.exports = router;

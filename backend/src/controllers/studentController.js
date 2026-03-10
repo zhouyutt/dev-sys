@@ -1,9 +1,11 @@
-const { Student, Course, Room, Staff, EquipmentAssignment, Equipment, Trip, TripParticipant, Boat } = require('../models');
+const { Student, Course, Room, Staff, EquipmentAssignment, Equipment, Trip, TripParticipant, Boat, sequelize } = require('../models');
 const { extractPassportInfo } = require('../utils/passport');
 const { Op } = require('sequelize');
 
-function generateGuestId() {
-  return 'G' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 8).toUpperCase();
+async function generateGuestId() {
+  const count = await Student.count();
+  const num = (count + 1).toString().padStart(5, '0');
+  return 'G' + num;
 }
 
 // 获取所有学员
@@ -102,8 +104,11 @@ exports.createStudent = async (req, res) => {
     }
 
     if (!studentData.guest_id) {
-      studentData.guest_id = generateGuestId();
+      studentData.guest_id = await generateGuestId();
     }
+    // 空字符串转 null，避免触发 isEmail 等验证器
+    if (studentData.email === '') studentData.email = null;
+    if (studentData.wechat === '') studentData.wechat = null;
     const student = await Student.create(studentData);
 
     const isEnroll = req.path === '/enroll' || (req.baseUrl && req.baseUrl.includes('enroll'));
@@ -183,23 +188,61 @@ exports.updateStudent = async (req, res) => {
 
 // 删除学员
 exports.deleteStudent = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
-    const student = await Student.findByPk(req.params.id);
+    const student = await Student.findByPk(req.params.id, { transaction: t });
 
     if (!student) {
+      await t.rollback();
       return res.status(404).json({
         success: false,
         message: '学员不存在'
       });
     }
 
-    await student.destroy();
+    // 1. 找出该学员参与的所有行程，更新行程的 current_participants 计数
+    const participations = await TripParticipant.findAll({
+      where: { student_id: student.id, status: 'confirmed' },
+      transaction: t
+    });
+    for (const p of participations) {
+      await Trip.update(
+        { current_participants: sequelize.literal('GREATEST(current_participants - 1, 0)') },
+        { where: { id: p.trip_id }, transaction: t }
+      );
+    }
+
+    // 2. 删除所有行程参与记录
+    await TripParticipant.destroy({
+      where: { student_id: student.id },
+      transaction: t
+    });
+
+    // 3. 删除装备分配记录
+    await EquipmentAssignment.destroy({
+      where: { student_id: student.id },
+      transaction: t
+    });
+
+    // 4. 如果学员有房间，减少房间入住计数
+    if (student.room_id) {
+      await Room.update(
+        { current_occupancy: sequelize.literal('GREATEST(current_occupancy - 1, 0)') },
+        { where: { id: student.room_id }, transaction: t }
+      );
+    }
+
+    // 5. 删除学员
+    await student.destroy({ transaction: t });
+
+    await t.commit();
 
     res.json({
       success: true,
       message: '删除成功'
     });
   } catch (error) {
+    await t.rollback();
     console.error('删除学员失败:', error);
     res.status(500).json({
       success: false,
@@ -210,19 +253,22 @@ exports.deleteStudent = async (req, res) => {
 
 // 分配房间
 exports.assignRoom = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const { room_id, check_in_date, check_out_date } = req.body;
-    const student = await Student.findByPk(req.params.id);
+    const student = await Student.findByPk(req.params.id, { transaction: t });
 
     if (!student) {
+      await t.rollback();
       return res.status(404).json({
         success: false,
         message: '学员不存在'
       });
     }
 
-    const room = await Room.findByPk(room_id);
+    const room = await Room.findByPk(room_id, { lock: true, transaction: t });
     if (!room) {
+      await t.rollback();
       return res.status(404).json({
         success: false,
         message: '房间不存在'
@@ -230,20 +276,36 @@ exports.assignRoom = async (req, res) => {
     }
 
     if (room.current_occupancy >= room.max_capacity) {
+      await t.rollback();
       return res.status(400).json({
         success: false,
         message: '房间已满'
       });
     }
 
-    // 更新学员的房间信息
-    await student.update({ room_id, check_in_date, check_out_date });
+    // 如果学员已有房间，先减少旧房间的入住计数
+    if (student.room_id && student.room_id !== room_id) {
+      const oldRoom = await Room.findByPk(student.room_id, { lock: true, transaction: t });
+      if (oldRoom) {
+        await oldRoom.update({
+          current_occupancy: Math.max(0, oldRoom.current_occupancy - 1),
+          status: oldRoom.current_occupancy - 1 <= 0 ? 'available' : oldRoom.status
+        }, { transaction: t });
+      }
+    }
 
-    // 更新房间的入住人数
-    await room.update({ 
-      current_occupancy: room.current_occupancy + 1,
-      status: 'occupied'
-    });
+    // 更新学员的房间信息
+    await student.update({ room_id, check_in_date, check_out_date }, { transaction: t });
+
+    // 更新新房间的入住人数（仅当换了新房间时才增加）
+    if (student.room_id !== room_id) {
+      await room.update({
+        current_occupancy: room.current_occupancy + 1,
+        status: 'occupied'
+      }, { transaction: t });
+    }
+
+    await t.commit();
 
     res.json({
       success: true,
@@ -251,6 +313,7 @@ exports.assignRoom = async (req, res) => {
       data: student
     });
   } catch (error) {
+    await t.rollback();
     console.error('分配房间失败:', error);
     res.status(500).json({
       success: false,

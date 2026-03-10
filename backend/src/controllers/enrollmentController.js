@@ -1,4 +1,10 @@
 const { Student } = require('../models');
+
+async function generateGuestId() {
+  const count = await Student.count();
+  const num = (count + 1).toString().padStart(5, '0');
+  return 'G' + num;
+}
 const QRCode = require('qrcode');
 const path = require('path');
 const fs = require('fs');
@@ -100,23 +106,36 @@ exports.submitEnrollment = async (req, res) => {
       });
     }
 
+    // 检查护照号是否已存在
+    if (passport_number) {
+      const existingPassport = await Student.findOne({ where: { passport_number } });
+      if (existingPassport) {
+        return res.status(400).json({
+          success: false,
+          message: 'This passport number is already registered'
+        });
+      }
+    }
+
     // 创建新学生记录
+    const guestId = await generateGuestId();
     const student = await Student.create({
-      name_en: name_en || name_cn, // 如果没有英文名，用中文名
+      guest_id: guestId,
+      name_en: name_en || name_cn,
       name_cn: name_cn || name_en,
       gender: gender || 'male',
       birth_date,
       nationality: nationality || 'China',
       phone,
-      email,
-      wechat,
+      email: email || null,
+      wechat: wechat || null,
       passport_number,
       passport_expiry,
       emergency_contact,
       emergency_phone,
-      course_type: course_type || 'Open Water',
+      learning_content: course_type || 'Open Water',
       notes,
-      status: 'pending', // 待处理状态
+      status: 'pending',
       check_in_date: null,
       check_out_date: null
     });

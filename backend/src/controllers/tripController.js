@@ -1,4 +1,4 @@
-const { Trip, Boat, Staff, TripParticipant, Student, Room } = require('../models');
+const { Trip, Boat, Staff, TripParticipant, TripStaff, Student, Room, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 // 获取所有行程
@@ -18,6 +18,11 @@ exports.getAllTrips = async (req, res) => {
         { model: Staff, as: 'captain', attributes: ['id', 'name', 'name_en'] },
         { model: Staff, as: 'dm', attributes: ['id', 'name', 'name_en'] },
         { model: Staff, as: 'instructor', attributes: ['id', 'name', 'name_en'] },
+        {
+          model: TripStaff,
+          as: 'tripStaff',
+          include: [{ model: Staff, as: 'staff', attributes: ['id', 'name', 'name_en', 'role'] }]
+        },
         { 
           model: TripParticipant, 
           as: 'participants',
@@ -112,6 +117,11 @@ exports.getTripById = async (req, res) => {
         { model: Staff, as: 'captain' },
         { model: Staff, as: 'dm' },
         { model: Staff, as: 'instructor' },
+        {
+          model: TripStaff,
+          as: 'tripStaff',
+          include: [{ model: Staff, as: 'staff', attributes: ['id', 'name', 'name_en', 'role'] }]
+        },
         { 
           model: TripParticipant, 
           as: 'participants',
@@ -142,8 +152,32 @@ exports.getTripById = async (req, res) => {
 
 // 创建行程
 exports.createTrip = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
-    const trip = await Trip.create(req.body);
+    const { dm_ids, instructor_ids, ...tripData } = req.body;
+    const dmIds = Array.isArray(dm_ids)
+      ? [...new Set(dm_ids.map(id => Number(id)).filter(Boolean))]
+      : [];
+    const instructorIdsRaw = Array.isArray(instructor_ids)
+      ? [...new Set(instructor_ids.map(id => Number(id)).filter(Boolean))]
+      : [];
+    const instructorIds = instructorIdsRaw.filter(id => !dmIds.includes(id));
+    const trip = await Trip.create(tripData, { transaction: t });
+
+    // 保存多DM
+    if (dmIds.length > 0) {
+      for (const staffId of dmIds) {
+        await TripStaff.create({ trip_id: trip.id, staff_id: staffId, role: 'dm' }, { transaction: t });
+      }
+    }
+    // 保存多教练
+    if (instructorIds.length > 0) {
+      for (const staffId of instructorIds) {
+        await TripStaff.create({ trip_id: trip.id, staff_id: staffId, role: 'instructor' }, { transaction: t });
+      }
+    }
+
+    await t.commit();
 
     res.status(201).json({
       success: true,
@@ -151,6 +185,7 @@ exports.createTrip = async (req, res) => {
       data: trip
     });
   } catch (error) {
+    await t.rollback();
     console.error('创建行程失败:', error);
     res.status(500).json({
       success: false,
@@ -162,17 +197,44 @@ exports.createTrip = async (req, res) => {
 
 // 更新行程
 exports.updateTrip = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
-    const trip = await Trip.findByPk(req.params.id);
+    const trip = await Trip.findByPk(req.params.id, { transaction: t });
 
     if (!trip) {
+      await t.rollback();
       return res.status(404).json({
         success: false,
         message: '行程不存在'
       });
     }
 
-    await trip.update(req.body);
+    const { dm_ids, instructor_ids, ...tripData } = req.body;
+    const dmIds = Array.isArray(dm_ids)
+      ? [...new Set(dm_ids.map(id => Number(id)).filter(Boolean))]
+      : [];
+    const instructorIdsRaw = Array.isArray(instructor_ids)
+      ? [...new Set(instructor_ids.map(id => Number(id)).filter(Boolean))]
+      : [];
+    const instructorIds = instructorIdsRaw.filter(id => !dmIds.includes(id));
+    await trip.update(tripData, { transaction: t });
+
+    // 更新多DM：先删除旧的，再插入新的
+    if (Array.isArray(dm_ids)) {
+      await TripStaff.destroy({ where: { trip_id: trip.id, role: 'dm' }, transaction: t });
+      for (const staffId of dmIds) {
+        await TripStaff.create({ trip_id: trip.id, staff_id: staffId, role: 'dm' }, { transaction: t });
+      }
+    }
+    // 更新多教练
+    if (Array.isArray(instructor_ids)) {
+      await TripStaff.destroy({ where: { trip_id: trip.id, role: 'instructor' }, transaction: t });
+      for (const staffId of instructorIds) {
+        await TripStaff.create({ trip_id: trip.id, staff_id: staffId, role: 'instructor' }, { transaction: t });
+      }
+    }
+
+    await t.commit();
 
     res.json({
       success: true,
@@ -180,6 +242,7 @@ exports.updateTrip = async (req, res) => {
       data: trip
     });
   } catch (error) {
+    await t.rollback();
     console.error('更新行程失败:', error);
     res.status(500).json({
       success: false,
@@ -217,11 +280,13 @@ exports.deleteTrip = async (req, res) => {
 
 // 添加参与者到行程
 exports.addParticipant = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const { student_id } = req.body;
-    const trip = await Trip.findByPk(req.params.id);
+    const trip = await Trip.findByPk(req.params.id, { lock: true, transaction: t });
 
     if (!trip) {
+      await t.rollback();
       return res.status(404).json({
         success: false,
         message: '行程不存在'
@@ -230,18 +295,21 @@ exports.addParticipant = async (req, res) => {
 
     // 检查是否已经添加
     const existing = await TripParticipant.findOne({
-      where: { trip_id: trip.id, student_id }
+      where: { trip_id: trip.id, student_id },
+      transaction: t
     });
 
     if (existing) {
+      await t.rollback();
       return res.status(400).json({
         success: false,
         message: '该学员已在行程中'
       });
     }
 
-    // 检查人数是否已满
+    // 检查人数是否已满（在事务内重新读取，防止并发竞争）
     if (trip.current_participants >= trip.max_participants) {
+      await t.rollback();
       return res.status(400).json({
         success: false,
         message: '行程人数已满'
@@ -252,12 +320,13 @@ exports.addParticipant = async (req, res) => {
       trip_id: trip.id,
       student_id,
       status: 'confirmed'
-    });
+    }, { transaction: t });
 
-    // 更新行程当前参与人数
-    await trip.update({ 
-      current_participants: trip.current_participants + 1 
-    });
+    await trip.update({
+      current_participants: trip.current_participants + 1
+    }, { transaction: t });
+
+    await t.commit();
 
     res.status(201).json({
       success: true,
@@ -265,6 +334,7 @@ exports.addParticipant = async (req, res) => {
       data: participant
     });
   } catch (error) {
+    await t.rollback();
     console.error('添加参与者失败:', error);
     res.status(500).json({
       success: false,
@@ -275,11 +345,13 @@ exports.addParticipant = async (req, res) => {
 
 // 从行程中移除参与者
 exports.removeParticipant = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const { student_id } = req.body;
-    const trip = await Trip.findByPk(req.params.id);
+    const trip = await Trip.findByPk(req.params.id, { lock: true, transaction: t });
 
     if (!trip) {
+      await t.rollback();
       return res.status(404).json({
         success: false,
         message: '行程不存在'
@@ -287,28 +359,36 @@ exports.removeParticipant = async (req, res) => {
     }
 
     const participant = await TripParticipant.findOne({
-      where: { trip_id: trip.id, student_id }
+      where: { trip_id: trip.id, student_id },
+      transaction: t
     });
 
     if (!participant) {
+      await t.rollback();
       return res.status(404).json({
         success: false,
         message: '参与者不存在'
       });
     }
 
-    await participant.destroy();
+    // 只有 confirmed 状态的参与者才计入 current_participants
+    const wasConfirmed = participant.status === 'confirmed';
+    await participant.destroy({ transaction: t });
 
-    // 更新行程当前参与人数
-    await trip.update({ 
-      current_participants: Math.max(0, trip.current_participants - 1)
-    });
+    if (wasConfirmed) {
+      await trip.update({
+        current_participants: Math.max(0, trip.current_participants - 1)
+      }, { transaction: t });
+    }
+
+    await t.commit();
 
     res.json({
       success: true,
       message: '移除参与者成功'
     });
   } catch (error) {
+    await t.rollback();
     console.error('移除参与者失败:', error);
     res.status(500).json({
       success: false,

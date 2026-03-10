@@ -40,8 +40,8 @@ exports.login = async (req, res) => {
 
     // 收集所有权限代码
     const permissions = new Set();
-    user.roles.forEach(role => {
-      role.permissions.forEach(permission => {
+    (user.roles || []).forEach(role => {
+      (role.permissions || []).forEach(permission => {
         permissions.add(permission.code);
       });
     });
@@ -111,10 +111,14 @@ exports.me = async (req, res) => {
       }]
     });
 
+    if (!user) {
+      return res.status(401).json({ success: false, message: '用户不存在' });
+    }
+
     // 收集所有权限代码
     const permissions = new Set();
-    user.roles.forEach(role => {
-      role.permissions.forEach(permission => {
+    (user.roles || []).forEach(role => {
+      (role.permissions || []).forEach(permission => {
         permissions.add(permission.code);
       });
     });
@@ -124,7 +128,7 @@ exports.me = async (req, res) => {
       data: {
         ...user.toJSON(),
         permissions: Array.from(permissions),
-        roles: user.roles.map(r => r.name)
+        roles: (user.roles || []).map(r => r.name)
       }
     });
   } catch (error) {
