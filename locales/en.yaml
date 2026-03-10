@@ -251,7 +251,7 @@ diveErp:
     staffManagement: Staff Management
     boatManagement: Boat Management
     enrollmentForm: Enrollment Form
-    diveErp: Dive ERP
+    diveErp: Uncle Chang Dive Admin
   common:
     id: ID
     actions: Actions
@@ -410,7 +410,7 @@ diveErp:
     enrollSuccess: Enrollment submitted successfully.
     enrollFail: Enrollment failed
   dashboard:
-    title: Semporna Dive Shop - Real-time Dashboard
+    title: Uncle Chang Dive Admin
     todayTrips: "Today's Boat Trips"
     boats: Boats
     noTrips: No trips

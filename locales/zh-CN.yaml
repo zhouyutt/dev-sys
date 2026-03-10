@@ -251,7 +251,7 @@ diveErp:
     staffManagement: 员工管理
     boatManagement: 船只管理
     enrollmentForm: 报名表
-    diveErp: 潜水ERP
+    diveErp: Uncle Chang Dive Admin
   common:
     id: 编号
     actions: 操作
@@ -410,7 +410,7 @@ diveErp:
     enrollSuccess: 报名提交成功。
     enrollFail: 报名失败
   dashboard:
-    title: 仙本那潜水店 - 实时大屏
+    title: Uncle Chang Dive Admin
     todayTrips: 今日出海行程
     boats: 艘船
     noTrips: 暂无行程
