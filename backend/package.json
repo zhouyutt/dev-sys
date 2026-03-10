@@ -8,7 +8,8 @@
     "dev": "nodemon src/index.js",
     "migrate": "node src/utils/migrate.js",
     "seed": "node src/utils/seed.js",
-    "init-permissions": "node src/utils/initPermissions.js"
+    "init-permissions": "node src/utils/initPermissions.js",
+    "test:smoke": "node scripts/smoke-test.js"
   },
   "keywords": ["erp", "dive", "management"],
   "author": "",

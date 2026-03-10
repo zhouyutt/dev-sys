@@ -155,17 +155,24 @@ exports.createTrip = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const { dm_ids, instructor_ids, ...tripData } = req.body;
+    const dmIds = Array.isArray(dm_ids)
+      ? [...new Set(dm_ids.map(id => Number(id)).filter(Boolean))]
+      : [];
+    const instructorIdsRaw = Array.isArray(instructor_ids)
+      ? [...new Set(instructor_ids.map(id => Number(id)).filter(Boolean))]
+      : [];
+    const instructorIds = instructorIdsRaw.filter(id => !dmIds.includes(id));
     const trip = await Trip.create(tripData, { transaction: t });
 
     // 保存多DM
-    if (Array.isArray(dm_ids) && dm_ids.length > 0) {
-      for (const staffId of dm_ids) {
+    if (dmIds.length > 0) {
+      for (const staffId of dmIds) {
         await TripStaff.create({ trip_id: trip.id, staff_id: staffId, role: 'dm' }, { transaction: t });
       }
     }
     // 保存多教练
-    if (Array.isArray(instructor_ids) && instructor_ids.length > 0) {
-      for (const staffId of instructor_ids) {
+    if (instructorIds.length > 0) {
+      for (const staffId of instructorIds) {
         await TripStaff.create({ trip_id: trip.id, staff_id: staffId, role: 'instructor' }, { transaction: t });
       }
     }
@@ -203,19 +210,26 @@ exports.updateTrip = async (req, res) => {
     }
 
     const { dm_ids, instructor_ids, ...tripData } = req.body;
+    const dmIds = Array.isArray(dm_ids)
+      ? [...new Set(dm_ids.map(id => Number(id)).filter(Boolean))]
+      : [];
+    const instructorIdsRaw = Array.isArray(instructor_ids)
+      ? [...new Set(instructor_ids.map(id => Number(id)).filter(Boolean))]
+      : [];
+    const instructorIds = instructorIdsRaw.filter(id => !dmIds.includes(id));
     await trip.update(tripData, { transaction: t });
 
     // 更新多DM：先删除旧的，再插入新的
     if (Array.isArray(dm_ids)) {
       await TripStaff.destroy({ where: { trip_id: trip.id, role: 'dm' }, transaction: t });
-      for (const staffId of dm_ids) {
+      for (const staffId of dmIds) {
         await TripStaff.create({ trip_id: trip.id, staff_id: staffId, role: 'dm' }, { transaction: t });
       }
     }
     // 更新多教练
     if (Array.isArray(instructor_ids)) {
       await TripStaff.destroy({ where: { trip_id: trip.id, role: 'instructor' }, transaction: t });
-      for (const staffId of instructor_ids) {
+      for (const staffId of instructorIds) {
         await TripStaff.create({ trip_id: trip.id, staff_id: staffId, role: 'instructor' }, { transaction: t });
       }
     }
