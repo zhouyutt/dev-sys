@@ -155,13 +155,13 @@
         </el-form-item>
         <!-- 多DM -->
         <el-form-item :label="t('diveErp.trips.dm')">
-          <el-select v-model="form.dm_ids" multiple filterable clearable style="width: 100%">
+          <el-select v-model="form.dm_ids" multiple filterable clearable style="width: 100%" :teleported="false">
             <el-option v-for="s in dms" :key="s.id" :label="s.name_en || s.name" :value="s.id" />
           </el-select>
         </el-form-item>
         <!-- 多教练 -->
         <el-form-item :label="t('diveErp.trips.instructor')">
-          <el-select v-model="form.instructor_ids" multiple filterable clearable style="width: 100%">
+          <el-select v-model="form.instructor_ids" multiple filterable clearable style="width: 100%" :teleported="false">
             <el-option v-for="s in instructors" :key="s.id" :label="s.name_en || s.name" :value="s.id" />
           </el-select>
         </el-form-item>
@@ -371,17 +371,26 @@ async function onSubmit() {
   }
   submitLoading.value = true;
   try {
+    const normalizedDmIds = Array.from(new Set((form.dm_ids || []).map(Number).filter(Boolean)));
+    const rawInstructorIds = Array.from(new Set((form.instructor_ids || []).map(Number).filter(Boolean)));
+    const overlapIds = rawInstructorIds.filter(id => normalizedDmIds.includes(id));
+    const normalizedInstructorIds = rawInstructorIds.filter(id => !normalizedDmIds.includes(id));
+
+    if (overlapIds.length > 0) {
+      message("Duplicate staff in DM/Instructor removed (kept in DM)", { type: "warning" });
+    }
+
     const payload: any = {
       trip_date: form.trip_date,
       destination: form.destination,
       boat_id: form.boat_id,
       captain_id: form.captain_id || null,
       // 保留旧字段兼容（取第一个）
-      dm_id: form.dm_ids[0] || null,
-      instructor_id: form.instructor_ids[0] || null,
+      dm_id: normalizedDmIds[0] || null,
+      instructor_id: normalizedInstructorIds[0] || null,
       // 新多人字段
-      dm_ids: form.dm_ids,
-      instructor_ids: form.instructor_ids,
+      dm_ids: normalizedDmIds,
+      instructor_ids: normalizedInstructorIds,
       departure_time: form.departure_time || null,
       max_participants: form.max_participants,
       status: form.status,
