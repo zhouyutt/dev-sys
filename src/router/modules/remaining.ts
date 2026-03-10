@@ -81,7 +81,7 @@ export default [
     name: "Display",
     component: () => import("@/views/dive-erp/display/index.vue"),
     meta: {
-      title: "Uncle Chang Dive Admin",
+      title: "Display Screen",
       showLink: false
     }
   }

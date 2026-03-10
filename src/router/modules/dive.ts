@@ -8,7 +8,7 @@ export default {
   redirect: "/dive/dashboard",
   meta: {
     icon: "ep:sailing",
-    title: { zh: "Uncle Chang Dive Admin", en: "Uncle Chang Dive Admin" },
+    title: { zh: "Uncle Chang", en: "Uncle Chang" },
     rank: dive
   },
   children: [
