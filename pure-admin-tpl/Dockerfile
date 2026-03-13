@@ -1,10 +1,12 @@
 FROM node:20-alpine as build-stage
 
 WORKDIR /app
-RUN corepack enable
-RUN corepack prepare pnpm@latest --activate
 
-RUN npm config set registry https://registry.npmmirror.com
+ARG PNPM_VERSION=9.15.9
+ARG NPM_REGISTRY=
+
+RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+RUN if [ -n "$NPM_REGISTRY" ]; then npm config set registry "$NPM_REGISTRY"; fi
 
 COPY .npmrc package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile

@@ -1,50 +1,42 @@
-# 使用 Node.js 18 作为基础镜像
 FROM node:18-alpine
 
-# 设置工作目录
 WORKDIR /app
 
-# 复制 package.json 和 package-lock.json
+ARG NPM_REGISTRY=
+ENV NODE_ENV=production
+
 COPY package*.json ./
 
-# 配置 npm 使用淘宝镜像加速
-RUN npm config set registry https://registry.npmmirror.com
+RUN if [ -n "$NPM_REGISTRY" ]; then npm config set registry "$NPM_REGISTRY"; fi \
+    && npm ci --omit=dev \
+    && npm cache clean --force \
+    && apk add --no-cache busybox-extras
 
-# 安装依赖（不使用 --production 以确保安装所有依赖）
-RUN npm install
-
-# 复制源代码
 COPY . .
 
-# 创建 uploads 目录
 RUN mkdir -p uploads
 
-# 暴露端口
 EXPOSE 3000
 
-# 使用阿里云镜像源并安装 netcat（用于数据库健康检查）
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
-    apk add --no-cache busybox-extras
-
-# 添加等待数据库准备就绪的脚本
-RUN cat > wait-for-db.sh <<'EOF'
+RUN cat > /usr/local/bin/docker-entrypoint.sh <<'EOF'
 #!/bin/sh
 set -e
 
-host="$1"
-shift
-cmd="$@"
+if [ -n "${DB_HOST:-}" ]; then
+  host="${DB_HOST}"
+  port="${DB_PORT:-3306}"
 
-until nc -z "$host" 3306; do
-  >&2 echo "MySQL is unavailable - sleeping"
-  sleep 2
-done
+  echo "Waiting for MySQL at ${host}:${port}..."
+  until nc -z "$host" "$port"; do
+    >&2 echo "MySQL is unavailable - sleeping"
+    sleep 2
+  done
+fi
 
->&2 echo "MySQL is up - executing command"
-exec $cmd
+exec "$@"
 EOF
 
-RUN chmod +x wait-for-db.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# 启动命令
-CMD ["sh", "-c", "./wait-for-db.sh mysql node src/index.js"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["node", "src/index.js"]

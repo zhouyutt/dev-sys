@@ -5,20 +5,24 @@ services:
     container_name: dive-erp-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: dive_erp_2024
-      MYSQL_DATABASE: dive_erp
-      MYSQL_USER: dive_user
-      MYSQL_PASSWORD: dive_erp_2024
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-this-root-password}
+      MYSQL_DATABASE: ${DB_NAME:-dive_erp}
+      MYSQL_USER: ${DB_USER:-dive_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-change-this-db-password}
     ports:
-      - "3307:3306"
+      - "${MYSQL_BIND_ADDRESS:-127.0.0.1}:${MYSQL_HOST_PORT:-3307}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 20s
     networks:
       - dive-erp-network
 
@@ -29,30 +33,37 @@ services:
       dockerfile: Dockerfile
       args:
         BUILDKIT_INLINE_CACHE: 1
+        NPM_REGISTRY: ${NPM_REGISTRY:-}
       x-bake:
         provenance: false
     container_name: dive-erp-backend
     restart: unless-stopped
     environment:
-      NODE_ENV: production
+      NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_NAME: dive_erp
-      DB_USER: root
-      DB_PASSWORD: dive_erp_2024
-      JWT_SECRET: dive_erp_jwt_secret_key_2024
-      JWT_EXPIRE: 7d
+      DB_NAME: ${DB_NAME:-dive_erp}
+      DB_USER: ${DB_USER:-dive_user}
+      DB_PASSWORD: ${DB_PASSWORD:-change-this-db-password}
+      JWT_SECRET: ${JWT_SECRET:-change-this-jwt-secret}
+      JWT_EXPIRE: ${JWT_EXPIRE:-7d}
       UPLOAD_DIR: ./uploads
-      MAX_FILE_SIZE: 10485760
-      FRONTEND_URL: http://localhost:8080
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-10485760}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8082}
     ports:
-      - "3000:3000"
+      - "${BACKEND_BIND_ADDRESS:-0.0.0.0}:${BACKEND_HOST_PORT:-3000}:3000"
     volumes:
       - ./backend/uploads:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     networks:
       - dive-erp-network
 
@@ -63,17 +74,17 @@ services:
       dockerfile: Dockerfile
       args:
         BUILDKIT_INLINE_CACHE: 1
+        PNPM_VERSION: ${PNPM_VERSION:-9.15.9}
+        NPM_REGISTRY: ${NPM_REGISTRY:-}
       x-bake:
         provenance: false
     container_name: dive-erp-frontend
     restart: unless-stopped
-    environment:
-      # 提供给 pure-admin 前端使用的后端 API 地址
-      VITE_PROXY_TARGET: http://backend:3000
     ports:
-      - "8082:80"
+      - "${FRONTEND_BIND_ADDRESS:-0.0.0.0}:${FRONTEND_HOST_PORT:-8082}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - dive-erp-network
 
