@@ -1,4 +1,0 @@
-[submodule "pure-admin-tpl"]
-	path = pure-admin-tpl
-	url = https://github.com/zhouyutt/dev-sys.git
-	branch = submodule/pure-admin-tpl-main
