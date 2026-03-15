@@ -1,22 +1,8 @@
-FROM node:20-alpine as build-stage
+FROM nginx:stable-alpine
 
-WORKDIR /app
+WORKDIR /usr/share/nginx/html
 
-ARG PNPM_VERSION=9.15.9
-ARG NPM_REGISTRY=
-
-RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
-RUN if [ -n "$NPM_REGISTRY" ]; then npm config set registry "$NPM_REGISTRY"; fi
-
-COPY .npmrc package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-
-COPY . .
-RUN pnpm build
-
-FROM nginx:stable-alpine as production-stage
-
-COPY --from=build-stage /app/dist /usr/share/nginx/html
+COPY dist ./
 
 # SPA history fallback + proxy /api to backend
 RUN echo 'server { \
@@ -28,7 +14,5 @@ RUN echo 'server { \
     location /static/ { expires 1y; add_header Cache-Control "public, immutable"; } \
     location /api { proxy_pass http://backend:3000; proxy_http_version 1.1; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; } \
     }' > /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]

@@ -67,15 +67,11 @@ services:
     networks:
       - dive-erp-network
 
-  # 前端服务（pure-admin）
+  # 前端服务（pure-admin，要求 pure-admin-tpl/dist 已提前构建）
   frontend:
     build:
       context: ./pure-admin-tpl
       dockerfile: Dockerfile
-      args:
-        BUILDKIT_INLINE_CACHE: 1
-        PNPM_VERSION: ${PNPM_VERSION:-9.15.9}
-        NPM_REGISTRY: ${NPM_REGISTRY:-}
       x-bake:
         provenance: false
     container_name: dive-erp-frontend

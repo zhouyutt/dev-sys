@@ -9,6 +9,7 @@
 - [ ] **MySQL**：已安装/已运行，数据库已创建，字符集 `utf8mb4`
 - [ ] **后端 .env**：已配置 `DB_HOST`、`DB_USER`、`DB_PASSWORD`、`DB_NAME`、`JWT_SECRET`（生产环境务必修改默认密钥）
 - [ ] **前端 API 地址**：生产环境 `VITE_API_BASE` 指向实际后端地址（如 `https://your-domain.com/api`）
+- [ ] **低内存服务器前端部署**：若服务器内存仅 `2GB`，已在本地或 CI 完成前端构建，并确认服务器存在 `pure-admin-tpl/dist`
 - [ ] **Nginx/反向代理**：若使用，已配置 `/api` 转发至后端、静态资源与 SPA 回退
 
 ---
