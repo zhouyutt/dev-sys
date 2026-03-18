@@ -401,8 +401,14 @@ diveErp:
     emergencyPhone: 电话号码
     courseSection: 课程选择
     learningContent: 学习内容
+    snorkeling: 浮潜
+    hiking: 爬山
     courseType: 课程类型
     additionalNotes: 备注
+    agreementTitle: 报名协议
+    agreeText: 点击提交即表示我已阅读并同意《报名协议》
+    agreementPlaceholder: 协议内容预留中（后续由管理员补充）
+    agreeRequired: 请先同意报名协议
     submit: 提交报名
     passportOcrSuccess: 护照识别成功。
     passportOcrFail: 护照识别失败，请手动填写。
