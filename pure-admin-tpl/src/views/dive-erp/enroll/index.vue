@@ -93,6 +93,8 @@
             <el-option label="OW" value="OW" />
             <el-option label="AOW" value="AOW" />
             <el-option label="OW+AOW" value="OW+AOW" />
+            <el-option :label="t('diveErp.enroll.snorkeling')" value="Snorkeling" />
+            <el-option :label="t('diveErp.enroll.hiking')" value="Hiking" />
           </el-select>
         </el-form-item>
         <el-form-item :label="t('diveErp.enroll.courseType')" prop="course_id">
@@ -108,6 +110,16 @@
 
         <el-form-item :label="t('diveErp.enroll.additionalNotes')" prop="notes">
           <el-input v-model="form.notes" type="textarea" :rows="3" :placeholder="t('diveErp.enroll.additionalNotes')" />
+        </el-form-item>
+
+        <el-divider content-position="left">{{ t("diveErp.enroll.agreementTitle") }}</el-divider>
+        <el-form-item prop="agree_protocol">
+          <el-checkbox v-model="form.agree_protocol">
+            {{ t("diveErp.enroll.agreeText") }}
+          </el-checkbox>
+          <div class="w-full mt-2 text-xs text-gray-500">
+            {{ t("diveErp.enroll.agreementPlaceholder") }}
+          </div>
         </el-form-item>
 
         <el-form-item>
@@ -149,14 +161,24 @@ const form = reactive({
   emergency_phone: "",
   learning_content: "" as string,
   course_id: null as number | null,
-  notes: ""
+  notes: "",
+  agree_protocol: false
 });
 
 const rules = {
   name_en: [{ required: true, message: "Required", trigger: "blur" }],
   gender: [{ required: true, message: "Required", trigger: "change" }],
   phone: [{ required: true, message: "Required", trigger: "blur" }],
-  passport_number: [{ required: true, message: "Required", trigger: "blur" }]
+  passport_number: [{ required: true, message: "Required", trigger: "blur" }],
+  agree_protocol: [
+    {
+      validator: (_rule: any, value: boolean, callback: (error?: Error) => void) => {
+        if (value) callback();
+        else callback(new Error(t("diveErp.enroll.agreeRequired")));
+      },
+      trigger: "change"
+    }
+  ]
 };
 
 const apiBase = (import.meta.env.VITE_API_BASE as string) || "/api";

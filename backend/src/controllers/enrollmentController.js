@@ -78,6 +78,7 @@ exports.submitEnrollment = async (req, res) => {
       passport_expiry,
       emergency_contact,
       emergency_phone,
+      learning_content,
       course_type,
       notes
     } = req.body;
@@ -133,7 +134,7 @@ exports.submitEnrollment = async (req, res) => {
       passport_expiry,
       emergency_contact,
       emergency_phone,
-      learning_content: course_type || 'Open Water',
+      learning_content: learning_content || course_type || 'Open Water',
       notes,
       status: 'pending',
       check_in_date: null,

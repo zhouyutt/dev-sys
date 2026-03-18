@@ -1,0 +1,303 @@
+buttons:
+  pureAccountSettings: Tetapan Akaun
+  pureLoginOut: Log Keluar
+  pureLogin: Log Masuk
+  pureOpenSystemSet: Buka Tetapan Sistem
+  pureReload: Muat Semula
+  pureCloseCurrentTab: Tutup Tab Semasa
+  pureCloseLeftTabs: Tutup Tab Kiri
+  pureCloseRightTabs: Tutup Tab Kanan
+  pureCloseOtherTabs: Tutup Tab Lain
+  pureCloseAllTabs: Tutup Semua Tab
+  pureContentFullScreen: Skrin Penuh Kandungan
+  pureContentExitFullScreen: Keluar Skrin Penuh Kandungan
+  pureClickCollapse: Klik untuk lipat
+  pureClickExpand: Klik untuk kembang
+  pureConfirm: Sahkan
+  pureSwitch: Tukar
+  pureClose: Tutup
+  pureBackTop: Kembali ke atas
+  pureOpenText: Buka
+  pureCloseText: Tutup
+  pureWatchMore: Lihat Lagi
+  pureMarkAsRead: Tandakan sebagai dibaca
+search:
+  pureTotal: Jumlah
+  pureHistory: Sejarah Carian
+  pureCollect: Simpan
+  pureDragSort: (boleh seret untuk susun)
+  pureEmpty: Tiada hasil carian
+  purePlaceholder: Cari menu
+panel:
+  pureSystemSet: Tetapan Sistem
+  pureCloseSystemSet: Tutup Tetapan
+  pureClearCacheAndToLogin: Kosongkan cache dan kembali log masuk
+  pureClearCache: Kosongkan cache
+  pureThemeMode: Mod Tema
+  pureThemeModeLight: Cerah
+  pureThemeModeDark: Gelap
+  pureThemeModeSystem: Automatik
+  pureThemeColor: Warna Tema
+  pureMenuLayout: Susun Atur Menu
+  pureStretch: Lebar Halaman
+  pureTagsStyle: Gaya Tab
+  pureInterfaceDisplay: Paparan Antara Muka
+  pureGreyModel: Mod Kelabu
+  pureWeakModel: Mod Buta Warna
+  pureHiddenTags: Sembunyikan tab
+  pureHiddenFooter: Sembunyikan footer
+  pureMultiTagsCache: Kekalkan tab
+menus:
+  pureHome: Laman Utama
+  pureLogin: Log Masuk
+  pureSysManagement: Pengurusan Sistem
+  pureUser: Pengurusan Pengguna
+  pureRole: Pengurusan Peranan
+  pureSystemMenu: Pengurusan Menu
+  pureDept: Pengurusan Jabatan
+  pureSysMonitor: Pemantauan Sistem
+  pureOnlineUser: Pengguna Dalam Talian
+  pureLoginLog: Log Log Masuk
+  pureOperationLog: Log Operasi
+  pureSystemLog: Log Sistem
+  pureAbout: Tentang
+  pureResult: Halaman Keputusan
+  pureSuccess: Berjaya
+  pureFail: Gagal
+status:
+  pureLoad: Sedang dimuat...
+  pureMessage: Mesej
+  pureNotify: Notifikasi
+  pureTodo: Tugasan
+  pureNoMessage: Tiada mesej
+  pureNoNotify: Tiada notifikasi
+  pureNoTodo: Tiada tugasan
+login:
+  pureUsername: Akaun
+  purePassword: Kata Laluan
+  pureVerifyCode: Kod Pengesahan
+  pureRemember: hari tanpa log masuk semula
+  pureRememberInfo: Selepas pilih ini, anda tidak perlu log masuk semula dalam tempoh hari yang dipilih
+  pureForget: Lupa kata laluan?
+  pureLogin: Log Masuk
+  pureThirdLogin: Log masuk pihak ketiga
+  purePhoneLogin: Log masuk telefon
+  pureQRCodeLogin: Log masuk kod QR
+  pureRegister: Daftar
+  pureWeChatLogin: Log masuk WeChat
+  pureAlipayLogin: Log masuk Alipay
+  pureQQLogin: Log masuk QQ
+  pureWeiBoLogin: Log masuk Weibo
+  purePhone: Nombor telefon
+  pureSmsVerifyCode: Kod SMS
+  pureBack: Kembali
+  pureTest: Mock test
+  pureTip: Selepas imbas kod, klik "Disahkan"
+  pureDefinite: Disahkan
+  pureLoginSuccess: Log masuk berjaya
+  pureLoginFail: Log masuk gagal
+  pureUsernameReg: Sila masukkan akaun
+  purePasswordReg: Sila masukkan kata laluan
+  pureVerifyCodeReg: Sila masukkan kod pengesahan
+diveErp:
+  menus:
+    dashboard: Papan Pemuka
+    roomManagement: Pengurusan Bilik
+    guestManagement: Pengurusan Tetamu
+    tripManagement: Pengurusan Trip
+    staffManagement: Pengurusan Staf
+    boatManagement: Pengurusan Bot
+    enrollmentForm: Borang Pendaftaran
+    diveErp: Uncle Chang
+  common:
+    id: ID
+    actions: Tindakan
+    edit: Edit
+    delete: Padam
+    cancel: Batal
+    ok: OK
+    add: Tambah
+    status: Status
+    notes: Catatan
+    name: Nama
+    phone: Telefon
+    email: E-mel
+    required: Wajib
+    loading: Sedang dimuat...
+    noData: Tiada data
+    search: Cari...
+    total: Jumlah
+  guests:
+    title: Pengurusan Tetamu
+    addGuest: "+ Tambah Tetamu"
+    editGuest: Edit Tetamu
+    guestId: ID Tetamu
+    nameEn: Nama (EN)
+    nameCn: Nama (CN)
+    gender: Jantina
+    male: Lelaki
+    female: Perempuan
+    other: Lain-lain
+    passportNo: No. Pasport
+    learningContent: Kandungan Pembelajaran
+    room: Bilik
+    emptyRoom: Kosongkan jika tidak menginap
+    pending: Menunggu
+    inHouse: Menginap
+    completed: Selesai
+    deleteConfirm: Padam tetamu ini?
+    loadFailed: Gagal memuat tetamu
+    englishName: Nama Inggeris
+    chineseName: Nama Cina
+    nationality: Kewarganegaraan
+    birthDate: Tarikh Lahir
+    passportExpiry: Tamat Tempoh Pasport
+    emergencyContact: Kontak Kecemasan
+    emergencyPhone: Telefon Kecemasan
+    checkIn: Tarikh Daftar Masuk
+    checkOut: Tarikh Daftar Keluar
+    tripHistory: Sejarah Trip
+    noTrips: Tiada rekod trip
+  rooms:
+    title: Pengurusan Bilik
+    addRoom: "+ Tambah Bilik"
+    editRoom: Edit Bilik
+    roomNo: Nombor Bilik
+    floor: Zon
+    roomType: Jenis Bilik
+    occupancy: Penghunian
+    available: Kosong
+    occupied: Didiami
+    maintenance: Penyelenggaraan
+    maxCapacity: Kapasiti Maksimum
+    guests: Tetamu
+    selectGuests: Pilih Tetamu
+    deleteConfirm: Padam bilik ini?
+    loadFailed: Gagal memuat bilik
+  trips:
+    title: Pengurusan Trip
+    addTrip: "+ Tambah Trip"
+    editTrip: Edit Trip
+    tripDate: Tarikh Trip
+    destination: Destinasi
+    boat: Bot
+    captain: Kapten
+    dm: Dive Master
+    instructor: Instructor
+    departure: Berlepas
+    participants: Peserta
+    scheduled: Dijadualkan
+    cancelled: Dibatalkan
+    guestList: Senarai Tetamu
+    noGuests: Tiada tetamu
+    selectGuests: Pilih tetamu
+    deleteConfirm: Padam trip ini?
+    loadFailed: Gagal memuat trip
+    selectDate: Pilih tarikh
+    selectDestination: Destinasi
+    departureTime: Masa berlepas
+    maxParticipants: Peserta maksimum
+  staff:
+    title: Pengurusan Staf
+    addStaff: "+ Tambah Staf"
+    editStaff: Edit Staf
+    nameEn: Nama
+    nameCn: Nama Cina
+    role: Peranan
+    captain: Kapten
+    diveMaster: Dive Master
+    instructor: Instructor
+    staffRole: Staf
+    certification: Sijil
+    languages: Bahasa
+    hireDate: Tarikh Mula
+    active: Aktif
+    inactive: Tidak aktif
+    onLeave: Cuti
+    deleteConfirm: Padam staf ini?
+    loadFailed: Gagal memuat staf
+  boats:
+    title: Pengurusan Bot
+    addBoat: "+ Tambah Bot"
+    editBoat: Edit Bot
+    boatNo: Nombor Bot
+    boatName: Nama Bot
+    type: Jenis
+    small: Kecil
+    large: Besar
+    capacity: Kapasiti
+    available: Tersedia
+    inUse: Digunakan
+    maintenance: Penyelenggaraan
+    deleteConfirm: Padam bot ini?
+    loadFailed: Gagal memuat bot
+  enroll:
+    title: Uncle Chang
+    subtitle: Borang Pendaftaran Pelajar
+    hint: Sila isi maklumat anda di bawah.
+    passportSection: Foto Pasport (Pilihan)
+    passportDrag: Klik atau seret foto pasport ke sini
+    passportHint: Kami akan cuba mengenal pasti nombor pasport dan maklumat asas.
+    basicInfo: Maklumat Asas
+    nameEn: "Nama Inggeris *"
+    nameCn: Nama Cina
+    gender: "Jantina *"
+    male: Lelaki
+    female: Perempuan
+    other: Lain-lain
+    dob: Tarikh Lahir
+    nationality: Kewarganegaraan
+    contactInfo: Maklumat Hubungan
+    phoneNo: "Nombor Telefon *"
+    wechat: ID WeChat
+    passportInfo: Maklumat Pasport
+    passportNo: "Nombor Pasport *"
+    passportExpiry: Tarikh Tamat Tempoh Pasport
+    emergency: Kontak Kecemasan
+    emergencyName: Nama
+    emergencyPhone: Nombor Telefon
+    courseSection: Pilihan Kursus
+    learningContent: Kandungan Pembelajaran
+    snorkeling: Snorkeling
+    hiking: Mendaki Gunung
+    courseType: Jenis Kursus
+    additionalNotes: Catatan Tambahan
+    agreementTitle: Perjanjian Pendaftaran
+    agreeText: Dengan menekan hantar, saya mengesahkan bahawa saya telah membaca dan bersetuju dengan Perjanjian Pendaftaran.
+    agreementPlaceholder: Ruang kandungan perjanjian (akan diberi kemudian).
+    agreeRequired: Sila setuju dengan perjanjian pendaftaran terlebih dahulu.
+    submit: Hantar Pendaftaran
+    passportOcrSuccess: Pasport berjaya dikenali.
+    passportOcrFail: Gagal mengenali pasport, sila isi secara manual.
+    passportUploadFail: Gagal memuat naik foto pasport.
+    enrollSuccess: Pendaftaran berjaya dihantar.
+    enrollFail: Pendaftaran gagal
+  dashboard:
+    title: 仙本那潜水店 - 实时大屏
+    todayTrips: Trip Bot Hari Ini
+    boats: Bot
+    noTrips: Tiada trip
+    roomStatus: Status Bilik
+    totalRooms: Jumlah Bilik
+    occupied: Didiami
+    available: Kosong
+    areaA: Zon A
+    areaB: Zon B
+    students: Pelajar
+    loading: Sedang dimuat...
+    fullscreen: Skrin Penuh
+    exitFullscreen: Keluar Skrin Penuh
+tableBar:
+  pureList: Senarai
+  pureLarge: Besar
+  pureDefault: Lalai
+  pureSmall: Kecil
+  pureColumnSettings: Tetapan Lajur
+  pureCollapse: Lipat
+  pureExpand: Kembang
+  pureRefresh: Muat Semula
+  pureDensity: Kepadatan
+  pureColumnDisplay: Paparan Lajur
+  pureReset: Tetapkan Semula
+  pureExitFullScreen: Keluar Skrin Penuh
+  pureFullScreen: Skrin Penuh

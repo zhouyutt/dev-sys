@@ -18,6 +18,8 @@ const TripParticipant = require('./TripParticipant')(sequelize, DataTypes);
 const TripStaff = require('./TripStaff')(sequelize, DataTypes);
 const Equipment = require('./Equipment')(sequelize, DataTypes);
 const EquipmentAssignment = require('./EquipmentAssignment')(sequelize, DataTypes);
+const WechatBinding = require('./WechatBinding')(sequelize, DataTypes);
+const MiniappOperationLog = require("./MiniappOperationLog")(sequelize, DataTypes);
 
 // 定义模型关联关系
 const setupAssociations = () => {
@@ -76,6 +78,14 @@ const setupAssociations = () => {
   EquipmentAssignment.belongsTo(Student, { foreignKey: 'student_id', as: 'student' });
   Equipment.hasMany(EquipmentAssignment, { foreignKey: 'equipment_id', as: 'assignments' });
   Student.hasMany(EquipmentAssignment, { foreignKey: 'student_id', as: 'equipmentAssignments' });
+
+  // 微信绑定关系
+  WechatBinding.belongsTo(User, { foreignKey: "user_id", as: "user" });
+  User.hasMany(WechatBinding, { foreignKey: "user_id", as: "wechatBindings" });
+  WechatBinding.belongsTo(Student, { foreignKey: "student_id", as: "student" });
+  Student.hasMany(WechatBinding, { foreignKey: "student_id", as: "wechatBindings" });
+  MiniappOperationLog.belongsTo(WechatBinding, { foreignKey: "binding_id", as: "binding" });
+  WechatBinding.hasMany(MiniappOperationLog, { foreignKey: "binding_id", as: "operationLogs" });
 };
 
 setupAssociations();
@@ -109,5 +119,7 @@ module.exports = {
   TripStaff,
   Equipment,
   EquipmentAssignment,
+  WechatBinding,
+  MiniappOperationLog,
   syncDatabase
 };

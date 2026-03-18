@@ -1,0 +1,24 @@
+{
+  "name": "dive-erp-miniapp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dive ERP WeChat Mini Program",
+  "scripts": {
+    "dev:weapp": "taro build --type weapp --watch",
+    "build:weapp": "taro build --type weapp",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tarojs/components": "^4.0.5",
+    "@tarojs/helper": "^4.0.5",
+    "@tarojs/runtime": "^4.0.5",
+    "@tarojs/taro": "^4.0.5",
+    "@tarojs/plugin-framework-vue3": "^4.0.5",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@tarojs/cli": "^4.0.5",
+    "@types/node": "^20.17.23",
+    "typescript": "^5.7.3"
+  }
+}

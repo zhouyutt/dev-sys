@@ -401,8 +401,14 @@ diveErp:
     emergencyPhone: Phone Number
     courseSection: Course Selection
     learningContent: Learning Content
+    snorkeling: Snorkeling
+    hiking: Hiking
     courseType: Course Type
     additionalNotes: Additional Notes
+    agreementTitle: Enrollment Agreement
+    agreeText: By clicking submit, I confirm I have read and agree to the Enrollment Agreement.
+    agreementPlaceholder: Agreement content placeholder (to be provided later).
+    agreeRequired: Please agree to the enrollment agreement first.
     submit: Submit Enrollment
     passportOcrSuccess: Passport recognized successfully.
     passportOcrFail: Failed to recognize passport, please fill manually.

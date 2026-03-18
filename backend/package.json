@@ -9,7 +9,8 @@
     "migrate": "node src/utils/migrate.js",
     "seed": "node src/utils/seed.js",
     "init-permissions": "node src/utils/initPermissions.js",
-    "test:smoke": "node scripts/smoke-test.js"
+    "test:smoke": "node scripts/smoke-test.js",
+    "test:miniapp": "node scripts/miniapp-smoke-test.js"
   },
   "keywords": ["erp", "dive", "management"],
   "author": "",

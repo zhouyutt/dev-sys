@@ -8,16 +8,22 @@ export function useTranslationLang(ref?: Ref) {
   const { locale, t } = useI18n();
   const route = useRoute();
 
-  function translationCh() {
-    $storage.locale = { locale: "zh" };
-    locale.value = "zh";
+  function setLocale(lang: "zh" | "en" | "ms") {
+    $storage.locale = { locale: lang };
+    locale.value = lang;
     ref && handleResize(ref.value);
   }
 
+  function translationCh() {
+    setLocale("zh");
+  }
+
   function translationEn() {
-    $storage.locale = { locale: "en" };
-    locale.value = "en";
-    ref && handleResize(ref.value);
+    setLocale("en");
+  }
+
+  function translationMs() {
+    setLocale("ms");
   }
 
   watch(
@@ -28,7 +34,10 @@ export function useTranslationLang(ref?: Ref) {
   );
 
   onBeforeMount(() => {
-    locale.value = $storage.locale?.locale ?? "zh";
+    const savedLocale = $storage.locale?.locale;
+    locale.value = ["zh", "en", "ms"].includes(savedLocale)
+      ? savedLocale
+      : "zh";
   });
 
   return {
@@ -36,6 +45,7 @@ export function useTranslationLang(ref?: Ref) {
     route,
     locale,
     translationCh,
-    translationEn
+    translationEn,
+    translationMs
   };
 }
