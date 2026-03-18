@@ -19,6 +19,10 @@ const roleRoutes = require('./roles'); // 角色管理
 const permissionRoutes = require('./permissions'); // 权限管理
 const menuRoutes = require('./menus'); // 菜单管理
 const monitorRoutes = require('./monitor'); // 系统监控
+const wechatAuthRoutes = require("./wechatAuth"); // 小程序微信登录
+const miniappGuestRoutes = require("./miniappGuest");
+const miniappStaffRoutes = require("./miniappStaff");
+const miniappOwnerRoutes = require("./miniappOwner");
 
 // 注册路由
 router.use('/auth', authRoutes);
@@ -38,6 +42,10 @@ router.use('/roles', roleRoutes); // 角色管理
 router.use('/permissions', permissionRoutes); // 权限管理
 router.use('/menus', menuRoutes); // 菜单管理
 router.use('/monitor', monitorRoutes); // 系统监控
+router.use("/wechat/auth", wechatAuthRoutes);
+router.use("/miniapp/guest", miniappGuestRoutes);
+router.use("/miniapp/staff", miniappStaffRoutes);
+router.use("/miniapp/owner", miniappOwnerRoutes);
 
 // Health check
 router.get('/health', (req, res) => {

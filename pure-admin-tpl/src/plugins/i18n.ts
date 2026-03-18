@@ -31,6 +31,10 @@ export const localesConfigs = {
   en: {
     ...siphonI18n("en"),
     ...enLocale
+  },
+  ms: {
+    ...siphonI18n("ms"),
+    ...enLocale
   }
 };
 
@@ -83,7 +87,8 @@ export function transformI18n(message: any = "") {
   if (typeof message === "object") {
     const locale: string | WritableComputedRef<string> | any =
       i18n.global.locale;
-    return message[locale?.value];
+    const active = locale?.value;
+    return message?.[active] ?? message?.en ?? message?.zh ?? "";
   }
 
   // 直接用 i18n.global.t 调用，它是响应式的，locale 切换时模板会自动更新
