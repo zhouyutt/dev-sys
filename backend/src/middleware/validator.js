@@ -45,7 +45,11 @@ const studentEnrollmentSchema = Joi.object({
   emergency_contact: Joi.string().allow('', null).max(100).label('紧急联系人'),
   emergency_phone: Joi.string().allow('', null).max(20).label('紧急联系电话'),
   medical_conditions: Joi.string().allow('', null).label('医疗状况'),
-  special_requirements: Joi.string().allow('', null).label('特殊要求')
+  special_requirements: Joi.string().allow('', null).label('特殊要求'),
+  notes: Joi.string().allow('', null).label('备注'),
+  room_sharing_preference: Joi.string().valid('shared', 'private').allow(null).label('是否拼房'),
+  sipadan_trip: Joi.boolean().allow(null).label('是否报名诗巴丹行程'),
+  agree_protocol: Joi.boolean().valid(true).required().label('免责协议确认')
 });
 
 // 登录验证规则

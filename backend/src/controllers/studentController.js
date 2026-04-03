@@ -90,10 +90,12 @@ exports.getStudentById = async (req, res) => {
 exports.createStudent = async (req, res) => {
   try {
     const studentData = req.validatedData || req.body;
+    const isEnroll = req.path === '/enroll' || (req.baseUrl && req.baseUrl.includes('enroll'));
+    const { agree_protocol, room_sharing_preference, sipadan_trip, ...persistData } = studentData;
 
     // 检查护照号是否已存在
     const existingStudent = await Student.findOne({
-      where: { passport_number: studentData.passport_number }
+      where: { passport_number: persistData.passport_number }
     });
 
     if (existingStudent) {
@@ -103,15 +105,29 @@ exports.createStudent = async (req, res) => {
       });
     }
 
-    if (!studentData.guest_id) {
-      studentData.guest_id = await generateGuestId();
+    if (!persistData.guest_id) {
+      persistData.guest_id = await generateGuestId();
     }
     // 空字符串转 null，避免触发 isEmail 等验证器
-    if (studentData.email === '') studentData.email = null;
-    if (studentData.wechat === '') studentData.wechat = null;
-    const student = await Student.create(studentData);
+    if (persistData.email === '') persistData.email = null;
+    if (persistData.wechat === '') persistData.wechat = null;
 
-    const isEnroll = req.path === '/enroll' || (req.baseUrl && req.baseUrl.includes('enroll'));
+    // 报名页附加信息统一落到 special_requirements / notes，避免新增字段导致兼容问题
+    if (isEnroll) {
+      const extras = [];
+      if (room_sharing_preference === 'shared') extras.push('拼房偏好: 是（3-4人一个房间）');
+      if (room_sharing_preference === 'private') extras.push('拼房偏好: 否');
+      if (sipadan_trip === true) extras.push('诗巴丹行程: 报名（诗巴丹2潜，马布岛1潜）');
+      if (sipadan_trip === false) extras.push('诗巴丹行程: 不报名');
+      if (agree_protocol === true) extras.push(`免责协议已同意: ${new Date().toISOString()}`);
+      if (extras.length) {
+        persistData.special_requirements = [persistData.special_requirements, ...extras]
+          .filter(Boolean)
+          .join('\n');
+      }
+    }
+
+    const student = await Student.create(persistData);
     if (isEnroll) {
       try {
         const today = new Date().toISOString().split('T')[0];

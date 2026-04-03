@@ -107,6 +107,42 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="项目价格">
+          <el-input
+            :model-value="estimatedPriceLabel"
+            readonly
+            placeholder="请选择项目后自动计算"
+          />
+          <div class="w-full mt-2 text-xs text-gray-500">项目和价格 1:1 绑定，价格来自“价格管理”页面配置。</div>
+        </el-form-item>
+
+        <el-form-item label="是否拼房" prop="room_sharing_preference">
+          <el-radio-group v-model="form.room_sharing_preference">
+            <el-radio value="shared">是</el-radio>
+            <el-radio value="private">否</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-alert
+          v-if="form.room_sharing_preference === 'shared'"
+          title="提示：拼房为 3-4 人一个房间。"
+          type="info"
+          :closable="false"
+          class="mb-4"
+        />
+
+        <el-form-item label="是否报名诗巴丹行程" prop="sipadan_trip">
+          <el-radio-group v-model="form.sipadan_trip">
+            <el-radio :value="true">是</el-radio>
+            <el-radio :value="false">否</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-alert
+          v-if="form.sipadan_trip === true"
+          title="本次诗巴丹行程诗巴丹 2 潜，马布岛 1 潜。"
+          type="warning"
+          :closable="false"
+          class="mb-4"
+        />
 
         <el-form-item :label="t('diveErp.enroll.additionalNotes')" prop="notes">
           <el-input v-model="form.notes" type="textarea" :rows="3" :placeholder="t('diveErp.enroll.additionalNotes')" />
@@ -115,10 +151,11 @@
         <el-divider content-position="left">{{ t("diveErp.enroll.agreementTitle") }}</el-divider>
         <el-form-item prop="agree_protocol">
           <el-checkbox v-model="form.agree_protocol">
-            {{ t("diveErp.enroll.agreeText") }}
+            我已阅读并同意《责任免除暨风险承担协议》
           </el-checkbox>
           <div class="w-full mt-2 text-xs text-gray-500">
-            {{ t("diveErp.enroll.agreementPlaceholder") }}
+            提交即视为同意协议条款。
+            <a href="/waiver/免责声明协议.pdf" target="_blank" class="text-blue-600 hover:underline ml-1">查看协议</a>
           </div>
         </el-form-item>
 
@@ -161,6 +198,8 @@ const form = reactive({
   emergency_phone: "",
   learning_content: "" as string,
   course_id: null as number | null,
+  room_sharing_preference: "private" as "shared" | "private",
+  sipadan_trip: false as boolean,
   notes: "",
   agree_protocol: false
 });
@@ -170,6 +209,7 @@ const rules = {
   gender: [{ required: true, message: "Required", trigger: "change" }],
   phone: [{ required: true, message: "Required", trigger: "blur" }],
   passport_number: [{ required: true, message: "Required", trigger: "blur" }],
+  course_id: [{ required: true, message: "Required", trigger: "change" }],
   agree_protocol: [
     {
       validator: (_rule: any, value: boolean, callback: (error?: Error) => void) => {
@@ -183,6 +223,15 @@ const rules = {
 
 const apiBase = (import.meta.env.VITE_API_BASE as string) || "/api";
 const uploadUrl = computed(() => `${apiBase}/students/upload-passport`);
+const selectedCourse = computed(() =>
+  courses.value.find((course: any) => course.id === form.course_id) || null
+);
+const estimatedPriceLabel = computed(() => {
+  if (!selectedCourse.value) return "";
+  const price = selectedCourse.value.price ?? 0;
+  const currency = selectedCourse.value.currency || "MYR";
+  return `${currency} ${Number(price).toFixed(2)}`;
+});
 
 async function loadCourses() {
   try {
@@ -233,7 +282,10 @@ async function onSubmit() {
       emergency_contact: form.emergency_contact,
       emergency_phone: form.emergency_phone,
       course_id: form.course_id,
-      notes: form.notes
+      notes: form.notes,
+      room_sharing_preference: form.room_sharing_preference,
+      sipadan_trip: form.sipadan_trip,
+      agree_protocol: form.agree_protocol
     });
     message(t("diveErp.enroll.enrollSuccess"), { type: "success" });
     formRef.value?.resetFields();

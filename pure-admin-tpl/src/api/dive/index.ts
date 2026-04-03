@@ -102,7 +102,9 @@ export const staffApi = {
 /** 课程（报名用） */
 export const courseApi = {
   list: (params?: Record<string, any>) =>
-    http.get<{ success: boolean; data: any[] }>(`${base}/courses`, { params })
+    http.get<{ success: boolean; data: any[] }>(`${base}/courses`, { params }),
+  update: (id: number, data: any) =>
+    http.put<{ success: boolean; data: any }>(`${base}/courses/${id}`, data)
 };
 
 /** 首页看板统计 */

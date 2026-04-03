@@ -73,13 +73,23 @@ export default {
       }
     },
     {
+      path: "/dive/pricing",
+      name: "DivePricing",
+      component: () => import("@/views/dive-erp/pricing/index.vue"),
+      meta: {
+        icon: "ep:money",
+        title: { zh: "价格管理", en: "Pricing" },
+        rank: 7
+      }
+    },
+    {
       path: "/dive/enroll-preview",
       name: "DiveEnrollPreview",
       component: () => import("@/views/dive-erp/enroll/index.vue"),
       meta: {
         icon: "ep:document",
         title: { zh: "报名表", en: "Enrollment Form" },
-        rank: 7
+        rank: 8
       }
     }
   ]
