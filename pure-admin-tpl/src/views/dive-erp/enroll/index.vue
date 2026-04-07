@@ -87,16 +87,38 @@
 
         <el-divider content-position="left">{{ t("diveErp.enroll.courseSection") }}</el-divider>
         <el-form-item :label="t('diveErp.enroll.learningContent')" prop="learning_content">
-          <el-select v-model="form.learning_content" :placeholder="t('diveErp.enroll.learningContent')" style="width: 100%">
-            <el-option label="Fun Dive" value="Fun Dive" />
-            <el-option label="DSD" value="DSD" />
-            <el-option label="OW" value="OW" />
-            <el-option label="AOW" value="AOW" />
-            <el-option label="OW+AOW" value="OW+AOW" />
-            <el-option :label="t('diveErp.enroll.snorkeling')" value="Snorkeling" />
-            <el-option :label="t('diveErp.enroll.hiking')" value="Hiking" />
+          <el-select
+            v-model="form.learning_content"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            :placeholder="t('diveErp.enroll.learningContent')"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="opt in learningContentOptions"
+              :key="opt"
+              :label="opt"
+              :value="opt"
+            />
           </el-select>
         </el-form-item>
+        <template v-if="selectedFunDiveRoutes.length">
+          <el-form-item
+            v-for="route in selectedFunDiveRoutes"
+            :key="route"
+            :label="`${route} 日期`"
+            prop="fun_dive_date_map"
+          >
+            <el-date-picker
+              v-model="form.fun_dive_date_map[route]"
+              type="date"
+              value-format="YYYY-MM-DD"
+              :placeholder="`请选择 ${route} 日期`"
+              style="width: 100%"
+            />
+          </el-form-item>
+        </template>
         <el-form-item :label="t('diveErp.enroll.courseType')" prop="course_id">
           <el-select v-model="form.course_id" :placeholder="t('diveErp.enroll.courseType')" style="width: 100%">
             <el-option
@@ -106,6 +128,7 @@
               :value="c.id"
             />
           </el-select>
+          <div class="w-full mt-2 text-xs text-gray-500">课程类型是课程库里的一种具体项目（如 OW、AOW 等）。</div>
         </el-form-item>
         <el-form-item label="项目价格">
           <el-input
@@ -116,20 +139,39 @@
           <div class="w-full mt-2 text-xs text-gray-500">项目和价格 1:1 绑定，价格来自“价格管理”页面配置。</div>
         </el-form-item>
 
-        <el-form-item label="是否拼房" prop="room_sharing_preference">
-          <el-radio-group v-model="form.room_sharing_preference">
-            <el-radio value="shared">是</el-radio>
-            <el-radio value="private">否</el-radio>
+        <el-form-item label="是否入住" prop="stay_required">
+          <el-radio-group v-model="form.stay_required">
+            <el-radio :value="true">是</el-radio>
+            <el-radio :value="false">否</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-alert
-          v-if="form.room_sharing_preference === 'shared'"
-          title="提示：拼房为 3-4 人一个房间。"
-          type="info"
-          :closable="false"
-          class="mb-4"
-        />
 
+        <template v-if="form.stay_required">
+          <el-form-item label="入住时间" prop="stay_dates">
+            <el-date-picker
+              v-model="form.stay_dates"
+              type="daterange"
+              value-format="YYYY-MM-DD"
+              range-separator="至"
+              start-placeholder="入住日期"
+              end-placeholder="离店日期"
+              style="width: 100%"
+            />
+          </el-form-item>
+          <el-form-item label="是否拼房" prop="room_sharing_preference">
+            <el-radio-group v-model="form.room_sharing_preference">
+              <el-radio value="shared">是</el-radio>
+              <el-radio value="private">否</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-alert
+            v-if="form.room_sharing_preference === 'shared'"
+            title="提示：拼房为 3-4 人一个房间。"
+            type="info"
+            :closable="false"
+            class="mb-4"
+          />
+        </template>
         <el-form-item label="是否报名诗巴丹行程" prop="sipadan_trip">
           <el-radio-group v-model="form.sipadan_trip">
             <el-radio :value="true">是</el-radio>
@@ -170,7 +212,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from "vue";
+import { ref, reactive, onMounted, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
 import { studentApi, courseApi } from "@/api/dive";
@@ -182,6 +224,22 @@ const { t } = useI18n();
 const formRef = ref();
 const submitting = ref(false);
 const courses = ref<any[]>([]);
+const learningContentOptions = [
+  "DSD",
+  "OW",
+  "AOW",
+  "OW+AOW",
+  "Snorkeling",
+  "Hiking",
+  "Fun Dive-马达京路线",
+  "Fun Dive-西亚米路线",
+  "Fun Dive-马布岛路线"
+];
+const FUN_DIVE_OPTIONS = [
+  "Fun Dive-马达京路线",
+  "Fun Dive-西亚米路线",
+  "Fun Dive-马布岛路线"
+];
 
 const form = reactive({
   name_en: "",
@@ -196,10 +254,13 @@ const form = reactive({
   passport_expiry: "",
   emergency_contact: "",
   emergency_phone: "",
-  learning_content: "" as string,
+  learning_content: [] as string[],
   course_id: null as number | null,
+  stay_required: false as boolean,
+  stay_dates: [] as string[],
   room_sharing_preference: "private" as "shared" | "private",
   sipadan_trip: false as boolean,
+  fun_dive_date_map: {} as Record<string, string>,
   notes: "",
   agree_protocol: false
 });
@@ -209,7 +270,16 @@ const rules = {
   gender: [{ required: true, message: "Required", trigger: "change" }],
   phone: [{ required: true, message: "Required", trigger: "blur" }],
   passport_number: [{ required: true, message: "Required", trigger: "blur" }],
-  course_id: [{ required: true, message: "Required", trigger: "change" }],
+  stay_dates: [
+    {
+      validator: (_rule: any, value: string[], callback: (error?: Error) => void) => {
+        if (!form.stay_required) return callback();
+        if (Array.isArray(value) && value.length === 2) return callback();
+        callback(new Error("请选择入住和离店日期"));
+      },
+      trigger: "change"
+    }
+  ],
   agree_protocol: [
     {
       validator: (_rule: any, value: boolean, callback: (error?: Error) => void) => {
@@ -226,12 +296,23 @@ const uploadUrl = computed(() => `${apiBase}/students/upload-passport`);
 const selectedCourse = computed(() =>
   courses.value.find((course: any) => course.id === form.course_id) || null
 );
+const selectedFunDiveRoutes = computed(() =>
+  form.learning_content.filter(item => FUN_DIVE_OPTIONS.includes(item))
+);
 const estimatedPriceLabel = computed(() => {
   if (!selectedCourse.value) return "";
   const price = selectedCourse.value.price ?? 0;
   const currency = selectedCourse.value.currency || "MYR";
   return `${currency} ${Number(price).toFixed(2)}`;
 });
+
+watch(selectedFunDiveRoutes, (routes) => {
+  const nextMap: Record<string, string> = {};
+  routes.forEach((route) => {
+    nextMap[route] = form.fun_dive_date_map[route] || "";
+  });
+  form.fun_dive_date_map = nextMap;
+}, { immediate: true });
 
 async function loadCourses() {
   try {
@@ -278,13 +359,20 @@ async function onSubmit() {
       wechat: form.wechat,
       passport_number: form.passport_number,
       passport_expiry: form.passport_expiry || null,
-      learning_content: form.learning_content || null,
+      learning_content: form.learning_content,
       emergency_contact: form.emergency_contact,
       emergency_phone: form.emergency_phone,
       course_id: form.course_id,
       notes: form.notes,
-      room_sharing_preference: form.room_sharing_preference,
+      stay_required: form.stay_required,
+      room_sharing_preference: form.stay_required ? form.room_sharing_preference : null,
+      check_in_date: form.stay_required ? (form.stay_dates?.[0] || null) : null,
+      check_out_date: form.stay_required ? (form.stay_dates?.[1] || null) : null,
       sipadan_trip: form.sipadan_trip,
+      fun_dive_dates: selectedFunDiveRoutes.value.map(route => ({
+        route,
+        date: form.fun_dive_date_map[route] || null
+      })),
       agree_protocol: form.agree_protocol
     });
     message(t("diveErp.enroll.enrollSuccess"), { type: "success" });

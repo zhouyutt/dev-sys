@@ -165,9 +165,13 @@ router.beforeEach((to: ToRouteType, _from, next) => {
       else document.title = transformI18n(item.meta.title);
     });
   }
-  /** 如果已经登录并存在登录信息后不能跳转到路由白名单，而是继续保持在当前页面 */
+  /** 已登录时仅拦截登录页；公开页（如 /enroll、/display）应允许直接访问 */
   function toCorrectRoute() {
-    whiteList.includes(to.fullPath) ? next(_from.fullPath) : next();
+    if (to.path === "/login") {
+      next(_from.fullPath || "/");
+      return;
+    }
+    next();
   }
   if (Cookies.get(multipleTabsKey) && userInfo) {
     // 无权限跳转403页面

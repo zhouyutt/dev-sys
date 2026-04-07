@@ -8,12 +8,17 @@ async function generateGuestId() {
 const QRCode = require('qrcode');
 const path = require('path');
 const fs = require('fs');
+const getEnrollmentUrl = () => {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8848';
+  const enrollPath = process.env.ENROLL_PATH || '/#/enroll';
+  return `${frontendUrl}${enrollPath}`;
+};
 
 // 生成报名二维码（固定的）
 exports.generateEnrollmentQRCode = async (req, res) => {
   try {
     // 公开报名表单URL
-    const enrollmentUrl = `${process.env.FRONTEND_URL || 'http://localhost:8848'}/enroll`;
+    const enrollmentUrl = getEnrollmentUrl();
     
     // 生成二维码
     const qrCodePath = path.join(__dirname, '../../uploads/qrcodes/enrollment-qrcode.png');
@@ -42,11 +47,11 @@ exports.getEnrollmentQRCode = async (req, res) => {
     // 检查文件是否存在
     if (!fs.existsSync(qrCodePath)) {
       // 如果不存在，生成新的
-      const enrollmentUrl = `${process.env.FRONTEND_URL || 'http://localhost:8848'}/enroll`;
+      const enrollmentUrl = getEnrollmentUrl();
       await QRCode.toFile(qrCodePath, enrollmentUrl);
     }
     
-    const enrollmentUrl = `${process.env.FRONTEND_URL || 'http://localhost:8848'}/enroll`;
+    const enrollmentUrl = getEnrollmentUrl();
     
     res.json({
       success: true,

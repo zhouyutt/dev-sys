@@ -1,11 +1,41 @@
 const { Student, Course, Room, Staff, EquipmentAssignment, Equipment, Trip, TripParticipant, Boat, sequelize } = require('../models');
 const { extractPassportInfo } = require('../utils/passport');
 const { Op } = require('sequelize');
+const ENROLL_META_PREFIX = 'ENROLL_META:';
 
 async function generateGuestId() {
   const count = await Student.count();
   const num = (count + 1).toString().padStart(5, '0');
   return 'G' + num;
+}
+
+function parseEnrollMetaFromText(specialRequirements) {
+  if (!specialRequirements) return {};
+  const lines = String(specialRequirements).split('\n');
+  const metaLine = lines.find(line => line.startsWith(ENROLL_META_PREFIX));
+  if (!metaLine) return {};
+  try {
+    return JSON.parse(metaLine.slice(ENROLL_META_PREFIX.length));
+  } catch (e) {
+    return {};
+  }
+}
+
+function mergeSpecialRequirements(originalText, meta) {
+  const lines = (originalText || '')
+    .split('\n')
+    .filter(line => line && !line.startsWith(ENROLL_META_PREFIX));
+  lines.push(`${ENROLL_META_PREFIX}${JSON.stringify(meta)}`);
+  return lines.join('\n');
+}
+
+function normalizeLearningContent(input) {
+  if (Array.isArray(input)) return input.filter(Boolean);
+  if (!input) return [];
+  return String(input)
+    .split(',')
+    .map(v => v.trim())
+    .filter(Boolean);
 }
 
 // 获取所有学员
@@ -91,7 +121,17 @@ exports.createStudent = async (req, res) => {
   try {
     const studentData = req.validatedData || req.body;
     const isEnroll = req.path === '/enroll' || (req.baseUrl && req.baseUrl.includes('enroll'));
-    const { agree_protocol, room_sharing_preference, sipadan_trip, ...persistData } = studentData;
+    const {
+      agree_protocol,
+      room_sharing_preference,
+      sipadan_trip,
+      stay_required,
+      fun_dive_dates,
+      check_in_date,
+      check_out_date,
+      learning_content,
+      ...persistData
+    } = studentData;
 
     // 检查护照号是否已存在
     const existingStudent = await Student.findOne({
@@ -108,24 +148,26 @@ exports.createStudent = async (req, res) => {
     if (!persistData.guest_id) {
       persistData.guest_id = await generateGuestId();
     }
+
+    const learningContents = normalizeLearningContent(learning_content);
+    persistData.learning_content = learningContents[0] || null;
+    persistData.check_in_date = check_in_date || null;
+    persistData.check_out_date = check_out_date || null;
+
     // 空字符串转 null，避免触发 isEmail 等验证器
     if (persistData.email === '') persistData.email = null;
     if (persistData.wechat === '') persistData.wechat = null;
 
-    // 报名页附加信息统一落到 special_requirements / notes，避免新增字段导致兼容问题
-    if (isEnroll) {
-      const extras = [];
-      if (room_sharing_preference === 'shared') extras.push('拼房偏好: 是（3-4人一个房间）');
-      if (room_sharing_preference === 'private') extras.push('拼房偏好: 否');
-      if (sipadan_trip === true) extras.push('诗巴丹行程: 报名（诗巴丹2潜，马布岛1潜）');
-      if (sipadan_trip === false) extras.push('诗巴丹行程: 不报名');
-      if (agree_protocol === true) extras.push(`免责协议已同意: ${new Date().toISOString()}`);
-      if (extras.length) {
-        persistData.special_requirements = [persistData.special_requirements, ...extras]
-          .filter(Boolean)
-          .join('\n');
-      }
-    }
+    const enrollMeta = {
+      learning_contents: learningContents,
+      stay_required: stay_required === true,
+      room_sharing_preference: room_sharing_preference || null,
+      sipadan_trip: sipadan_trip === true,
+      fun_dive_dates: Array.isArray(fun_dive_dates) ? fun_dive_dates.filter(Boolean) : [],
+      agree_protocol: agree_protocol === true,
+      agree_protocol_at: agree_protocol === true ? new Date().toISOString() : null
+    };
+    persistData.special_requirements = mergeSpecialRequirements(persistData.special_requirements, enrollMeta);
 
     const student = await Student.create(persistData);
     if (isEnroll) {
@@ -186,7 +228,43 @@ exports.updateStudent = async (req, res) => {
       });
     }
 
-    await student.update(req.body);
+    const payload = { ...req.body };
+    const hasLearningContentField = Object.prototype.hasOwnProperty.call(payload, 'learning_content');
+    const learningContents = normalizeLearningContent(payload.learning_content);
+    if (hasLearningContentField) {
+      payload.learning_content = learningContents[0] || null;
+    }
+
+    const oldMeta = parseEnrollMetaFromText(student.special_requirements);
+    const mergedMeta = {
+      ...oldMeta,
+      learning_contents: hasLearningContentField ? learningContents : (oldMeta.learning_contents || []),
+      stay_required:
+        payload.stay_required === undefined ? oldMeta.stay_required === true : payload.stay_required === true,
+      room_sharing_preference:
+        payload.room_sharing_preference === undefined
+          ? oldMeta.room_sharing_preference || null
+          : payload.room_sharing_preference || null,
+      sipadan_trip: payload.sipadan_trip === undefined ? oldMeta.sipadan_trip === true : payload.sipadan_trip === true,
+      fun_dive_dates:
+        payload.fun_dive_dates === undefined
+          ? oldMeta.fun_dive_dates || []
+          : (Array.isArray(payload.fun_dive_dates) ? payload.fun_dive_dates.filter(Boolean) : []),
+      agree_protocol: payload.agree_protocol === undefined ? oldMeta.agree_protocol === true : payload.agree_protocol === true,
+      agree_protocol_at:
+        payload.agree_protocol === true
+          ? new Date().toISOString()
+          : (oldMeta.agree_protocol_at || null)
+    };
+
+    payload.special_requirements = mergeSpecialRequirements(payload.special_requirements ?? student.special_requirements, mergedMeta);
+    delete payload.stay_required;
+    delete payload.room_sharing_preference;
+    delete payload.sipadan_trip;
+    delete payload.fun_dive_dates;
+    delete payload.agree_protocol;
+
+    await student.update(payload);
 
     res.json({
       success: true,

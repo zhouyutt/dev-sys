@@ -36,7 +36,8 @@ const generateQRCode = async (data, options = {}) => {
  */
 const generateEnrollmentURL = (baseUrl) => {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
-  return `${frontendUrl}/enroll`;
+  const enrollPath = process.env.ENROLL_PATH || '/#/enroll';
+  return `${frontendUrl}${enrollPath}`;
 };
 
 module.exports = {

@@ -39,7 +39,10 @@ const studentEnrollmentSchema = Joi.object({
   passport_number: Joi.string().required().max(50).label('护照号码'),
   passport_expiry: Joi.date().allow(null).label('护照过期日期'),
   course_id: Joi.number().integer().allow(null).label('课程ID'),
-  learning_content: Joi.string().allow('', null).max(50).label('参与内容'),
+  learning_content: Joi.alternatives().try(
+    Joi.string().allow('', null).max(255),
+    Joi.array().items(Joi.string().max(100)).max(20)
+  ).label('参与内容'),
   certification_level: Joi.string().allow('', null).max(50).label('证书等级'),
   room_id: Joi.number().integer().allow(null).label('房间ID'),
   emergency_contact: Joi.string().allow('', null).max(100).label('紧急联系人'),
@@ -47,8 +50,20 @@ const studentEnrollmentSchema = Joi.object({
   medical_conditions: Joi.string().allow('', null).label('医疗状况'),
   special_requirements: Joi.string().allow('', null).label('特殊要求'),
   notes: Joi.string().allow('', null).label('备注'),
+  stay_required: Joi.boolean().allow(null).label('是否入住'),
   room_sharing_preference: Joi.string().valid('shared', 'private').allow(null).label('是否拼房'),
   sipadan_trip: Joi.boolean().allow(null).label('是否报名诗巴丹行程'),
+  fun_dive_dates: Joi.array().items(
+    Joi.alternatives().try(
+      Joi.date(),
+      Joi.object({
+        route: Joi.string().required(),
+        date: Joi.date().allow(null)
+      })
+    )
+  ).allow(null).label('Fun Dive 日期'),
+  check_in_date: Joi.date().allow(null).label('入住日期'),
+  check_out_date: Joi.date().allow(null).label('离店日期'),
   agree_protocol: Joi.boolean().valid(true).required().label('免责协议确认')
 });
 
