@@ -107,6 +107,7 @@ diveErp:
     tripManagement: Pengurusan Trip
     staffManagement: Pengurusan Staf
     boatManagement: Pengurusan Bot
+    pricingManagement: Pengurusan Harga
     enrollmentForm: Borang Pendaftaran
     diveErp: Uncle Chang
   common:
@@ -127,6 +128,13 @@ diveErp:
     noData: Tiada data
     search: Cari...
     total: Jumlah
+    yes: Ya
+    no: Tidak
+    addSuccess: Berjaya ditambah
+    editSuccess: Berjaya dikemas kini
+    deleteSuccess: Berjaya dipadam
+    deleteFailed: Gagal memadam
+    requestFailed: Permintaan gagal
   guests:
     title: Pengurusan Tetamu
     addGuest: "+ Tambah Tetamu"
@@ -197,6 +205,7 @@ diveErp:
     selectDestination: Destinasi
     departureTime: Masa berlepas
     maxParticipants: Peserta maksimum
+    duplicateStaffWarning: Staf duplikasi dipilih untuk DM/Instructor; hanya dikekalkan sebagai DM
   staff:
     title: Pengurusan Staf
     addStaff: "+ Tambah Staf"
@@ -272,8 +281,53 @@ diveErp:
     passportUploadFail: Gagal memuat naik foto pasport.
     enrollSuccess: Pendaftaran berjaya dihantar.
     enrollFail: Pendaftaran gagal
+    nameCnPlaceholder: Masukkan nama Cina
+    courseTypeHint: Jenis kursus ialah satu item khusus dari katalog kursus (contohnya OW, AOW).
+    projectPrice: Harga Projek
+    projectPricePlaceholder: Dikira automatik selepas pilih kursus
+    projectPriceHint: Harga dipadankan 1:1 dengan projek dan dikonfigurasi di halaman Harga.
+    stayRequired: Perlu Menginap
+    stayDates: Tarikh Menginap
+    stayDatesRequired: Sila pilih tarikh daftar masuk dan daftar keluar
+    rangeSeparator: hingga
+    roomSharing: Bilik Kongsi
+    roomSharingHint: Susunan bilik kongsi ialah 3-4 tetamu setiap bilik.
+    sipadanTrip: Sertai Trip Sipadan
+    sipadanTripHint: Trip Sipadan ini merangkumi 2 selaman di Sipadan dan 1 selaman di Mabul.
+    waiverAgreeText: Saya telah membaca dan bersetuju dengan Perjanjian Pengecualian Liabiliti dan Tanggungan Risiko.
+    waiverHint: Menghantar borang ini bermaksud anda bersetuju dengan terma perjanjian.
+    viewAgreement: Lihat Perjanjian
+    funDiveDateLabel: "Tarikh {route}"
+    funDiveDatePlaceholder: Pilih tarikh untuk {route}
+    learningOptions:
+      dsd: DSD
+      ow: OW
+      aow: AOW
+      owAow: OW+AOW
+      snorkeling: Snorkeling
+      hiking: Mendaki
+      razor: Razor Side-mounted
+      tech40: Tech 40
+      tech50: Tech 50
+      funDiveMataking: Fun Dive-Laluan Mataking
+      funDiveSiAmil: Fun Dive-Laluan Si Amil
+      funDiveMabul: Fun Dive-Laluan Mabul
+  students:
+    stayRequired: Menginap
+    roomSharing: Bilik Kongsi
+    sipadanTrip: Sertai Trip Sipadan
+  pricing:
+    hint: Konfigurasi harga 1:1 (satu projek, satu harga)
+    courseCode: Kod Projek
+    courseName: Nama Projek
+    currency: Mata Wang
+    price: Harga
+    save: Simpan
+    loadFailed: Gagal memuat harga
+    saveSuccess: Harga berjaya disimpan
+    saveFailed: Gagal menyimpan harga
   dashboard:
-    title: 仙本那潜水店 - 实时大屏
+    title: Uncle Chang
     todayTrips: Trip Bot Hari Ini
     boats: Bot
     noTrips: Tiada trip

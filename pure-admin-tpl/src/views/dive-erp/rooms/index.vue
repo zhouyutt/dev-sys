@@ -284,7 +284,7 @@ async function onSubmit() {
     dialogVisible.value = false;
     loadList(true);
   } catch (e: any) {
-    message(e?.response?.data?.message || e?.message || "Request failed", { type: "error" });
+    message(e?.response?.data?.message || e?.message || t("diveErp.common.requestFailed"), { type: "error" });
   } finally {
     submitLoading.value = false;
   }
@@ -296,7 +296,7 @@ async function handleDelete(row: any) {
     message(t("diveErp.common.delete") + " OK");
     loadList();
   } catch (e: any) {
-    message(e?.response?.data?.message || "Delete failed", { type: "error" });
+    message(e?.response?.data?.message || t("diveErp.common.deleteFailed"), { type: "error" });
   }
 }
 

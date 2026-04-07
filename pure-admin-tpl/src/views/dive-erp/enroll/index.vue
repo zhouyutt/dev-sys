@@ -30,7 +30,7 @@
           <el-input v-model="form.name_en" :placeholder="t('diveErp.enroll.nameEn')" />
         </el-form-item>
         <el-form-item :label="t('diveErp.enroll.nameCn')" prop="name_cn">
-          <el-input v-model="form.name_cn" placeholder="输入中文姓名" />
+          <el-input v-model="form.name_cn" :placeholder="t('diveErp.enroll.nameCnPlaceholder')" />
         </el-form-item>
         <el-form-item :label="t('diveErp.enroll.gender')" prop="gender">
           <el-radio-group v-model="form.gender">
@@ -98,7 +98,7 @@
             <el-option
               v-for="opt in learningContentOptions"
               :key="opt"
-              :label="opt"
+              :label="learningContentLabel(opt)"
               :value="opt"
             />
           </el-select>
@@ -107,14 +107,14 @@
           <el-form-item
             v-for="route in selectedFunDiveRoutes"
             :key="route"
-            :label="`${route} 日期`"
+            :label="t('diveErp.enroll.funDiveDateLabel', { route: learningContentLabel(route) })"
             prop="fun_dive_date_map"
           >
             <el-date-picker
               v-model="form.fun_dive_date_map[route]"
               type="date"
               value-format="YYYY-MM-DD"
-              :placeholder="`请选择 ${route} 日期`"
+              :placeholder="t('diveErp.enroll.funDiveDatePlaceholder', { route: learningContentLabel(route) })"
               style="width: 100%"
             />
           </el-form-item>
@@ -128,59 +128,59 @@
               :value="c.id"
             />
           </el-select>
-          <div class="w-full mt-2 text-xs text-gray-500">课程类型是课程库里的一种具体项目（如 OW、AOW 等）。</div>
+          <div class="w-full mt-2 text-xs text-gray-500">{{ t('diveErp.enroll.courseTypeHint') }}</div>
         </el-form-item>
-        <el-form-item label="项目价格">
+        <el-form-item :label="t('diveErp.enroll.projectPrice')">
           <el-input
             :model-value="estimatedPriceLabel"
             readonly
-            placeholder="请选择项目后自动计算"
+            :placeholder="t('diveErp.enroll.projectPricePlaceholder')"
           />
-          <div class="w-full mt-2 text-xs text-gray-500">项目和价格 1:1 绑定，价格来自“价格管理”页面配置。</div>
+          <div class="w-full mt-2 text-xs text-gray-500">{{ t('diveErp.enroll.projectPriceHint') }}</div>
         </el-form-item>
 
-        <el-form-item label="是否入住" prop="stay_required">
+        <el-form-item :label="t('diveErp.enroll.stayRequired')" prop="stay_required">
           <el-radio-group v-model="form.stay_required">
-            <el-radio :value="true">是</el-radio>
-            <el-radio :value="false">否</el-radio>
+            <el-radio :value="true">{{ t('diveErp.common.yes') }}</el-radio>
+            <el-radio :value="false">{{ t('diveErp.common.no') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
         <template v-if="form.stay_required">
-          <el-form-item label="入住时间" prop="stay_dates">
+          <el-form-item :label="t('diveErp.enroll.stayDates')" prop="stay_dates">
             <el-date-picker
               v-model="form.stay_dates"
               type="daterange"
               value-format="YYYY-MM-DD"
-              range-separator="至"
-              start-placeholder="入住日期"
-              end-placeholder="离店日期"
+              :range-separator="t('diveErp.enroll.rangeSeparator')"
+              :start-placeholder="t('diveErp.guests.checkIn')"
+              :end-placeholder="t('diveErp.guests.checkOut')"
               style="width: 100%"
             />
           </el-form-item>
-          <el-form-item label="是否拼房" prop="room_sharing_preference">
+          <el-form-item :label="t('diveErp.enroll.roomSharing')" prop="room_sharing_preference">
             <el-radio-group v-model="form.room_sharing_preference">
-              <el-radio value="shared">是</el-radio>
-              <el-radio value="private">否</el-radio>
+              <el-radio value="shared">{{ t('diveErp.common.yes') }}</el-radio>
+              <el-radio value="private">{{ t('diveErp.common.no') }}</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-alert
             v-if="form.room_sharing_preference === 'shared'"
-            title="提示：拼房为 3-4 人一个房间。"
+            :title="t('diveErp.enroll.roomSharingHint')"
             type="info"
             :closable="false"
             class="mb-4"
           />
         </template>
-        <el-form-item label="是否报名诗巴丹行程" prop="sipadan_trip">
+        <el-form-item :label="t('diveErp.enroll.sipadanTrip')" prop="sipadan_trip">
           <el-radio-group v-model="form.sipadan_trip">
-            <el-radio :value="true">是</el-radio>
-            <el-radio :value="false">否</el-radio>
+            <el-radio :value="true">{{ t('diveErp.common.yes') }}</el-radio>
+            <el-radio :value="false">{{ t('diveErp.common.no') }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-alert
           v-if="form.sipadan_trip === true"
-          title="本次诗巴丹行程诗巴丹 2 潜，马布岛 1 潜。"
+          :title="t('diveErp.enroll.sipadanTripHint')"
           type="warning"
           :closable="false"
           class="mb-4"
@@ -193,11 +193,11 @@
         <el-divider content-position="left">{{ t("diveErp.enroll.agreementTitle") }}</el-divider>
         <el-form-item prop="agree_protocol">
           <el-checkbox v-model="form.agree_protocol">
-            我已阅读并同意《责任免除暨风险承担协议》
+            {{ t('diveErp.enroll.waiverAgreeText') }}
           </el-checkbox>
           <div class="w-full mt-2 text-xs text-gray-500">
-            提交即视为同意协议条款。
-            <a href="/waiver/免责声明协议.pdf" target="_blank" class="text-blue-600 hover:underline ml-1">查看协议</a>
+            {{ t('diveErp.enroll.waiverHint') }}
+            <a href="/waiver/免责声明协议.pdf" target="_blank" class="text-blue-600 hover:underline ml-1">{{ t('diveErp.enroll.viewAgreement') }}</a>
           </div>
         </el-form-item>
 
@@ -240,6 +240,20 @@ const FUN_DIVE_OPTIONS = [
   "Fun Dive-西亚米路线",
   "Fun Dive-马布岛路线"
 ];
+const learningContentLabel = (value: string) => {
+  const keyMap: Record<string, string> = {
+    DSD: "diveErp.enroll.learningOptions.dsd",
+    OW: "diveErp.enroll.learningOptions.ow",
+    AOW: "diveErp.enroll.learningOptions.aow",
+    "OW+AOW": "diveErp.enroll.learningOptions.owAow",
+    Snorkeling: "diveErp.enroll.learningOptions.snorkeling",
+    Hiking: "diveErp.enroll.learningOptions.hiking",
+    "Fun Dive-马达京路线": "diveErp.enroll.learningOptions.funDiveMataking",
+    "Fun Dive-西亚米路线": "diveErp.enroll.learningOptions.funDiveSiAmil",
+    "Fun Dive-马布岛路线": "diveErp.enroll.learningOptions.funDiveMabul"
+  };
+  return t(keyMap[value] || value);
+};
 
 const form = reactive({
   name_en: "",
@@ -275,7 +289,7 @@ const rules = {
       validator: (_rule: any, value: string[], callback: (error?: Error) => void) => {
         if (!form.stay_required) return callback();
         if (Array.isArray(value) && value.length === 2) return callback();
-        callback(new Error("请选择入住和离店日期"));
+        callback(new Error(t("diveErp.enroll.stayDatesRequired")));
       },
       trigger: "change"
     }

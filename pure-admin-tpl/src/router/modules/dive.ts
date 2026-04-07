@@ -1,4 +1,5 @@
 import { dive } from "@/router/enums";
+import { $t } from "@/plugins/i18n";
 const Layout = () => import("@/layout/index.vue");
 
 export default {
@@ -8,7 +9,7 @@ export default {
   redirect: "/dive/dashboard",
   meta: {
     icon: "ep:sailing",
-    title: { zh: "Uncle Chang", en: "Uncle Chang" },
+    title: $t("diveErp.menus.diveErp"),
     rank: dive
   },
   children: [
@@ -18,7 +19,7 @@ export default {
       component: () => import("@/views/dive-erp/dashboard/index.vue"),
       meta: {
         icon: "ep:data-line",
-        title: { zh: "仪表盘", en: "Dashboard" },
+        title: $t("diveErp.menus.dashboard"),
         rank: 1
       }
     },
@@ -28,7 +29,7 @@ export default {
       component: () => import("@/views/dive-erp/rooms/index.vue"),
       meta: {
         icon: "ep:house",
-        title: { zh: "房间管理", en: "Room Management" },
+        title: $t("diveErp.menus.roomManagement"),
         rank: 2
       }
     },
@@ -38,7 +39,7 @@ export default {
       component: () => import("@/views/dive-erp/students/index.vue"),
       meta: {
         icon: "ep:user",
-        title: { zh: "客人管理", en: "Guest Management" },
+        title: $t("diveErp.menus.guestManagement"),
         rank: 3
       }
     },
@@ -48,7 +49,7 @@ export default {
       component: () => import("@/views/dive-erp/trips/index.vue"),
       meta: {
         icon: "ri:route-line",
-        title: { zh: "行程管理", en: "Trip Management" },
+        title: $t("diveErp.menus.tripManagement"),
         rank: 4
       }
     },
@@ -58,7 +59,7 @@ export default {
       component: () => import("@/views/dive-erp/staff/index.vue"),
       meta: {
         icon: "ep:user-filled",
-        title: { zh: "员工管理", en: "Staff Management" },
+        title: $t("diveErp.menus.staffManagement"),
         rank: 5
       }
     },
@@ -68,7 +69,7 @@ export default {
       component: () => import("@/views/dive-erp/boats/index.vue"),
       meta: {
         icon: "ep:ship",
-        title: { zh: "船只管理", en: "Boat Management" },
+        title: $t("diveErp.menus.boatManagement"),
         rank: 6
       }
     },
@@ -78,7 +79,7 @@ export default {
       component: () => import("@/views/dive-erp/pricing/index.vue"),
       meta: {
         icon: "ep:money",
-        title: { zh: "价格管理", en: "Pricing" },
+        title: $t("diveErp.menus.pricingManagement"),
         rank: 7
       }
     },
@@ -88,7 +89,7 @@ export default {
       component: () => import("@/views/dive-erp/enroll/index.vue"),
       meta: {
         icon: "ep:document",
-        title: { zh: "报名表", en: "Enrollment Form" },
+        title: $t("diveErp.menus.enrollmentForm"),
         rank: 8
       }
     }

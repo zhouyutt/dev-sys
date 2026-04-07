@@ -377,7 +377,7 @@ async function onSubmit() {
     const normalizedInstructorIds = rawInstructorIds.filter(id => !normalizedDmIds.includes(id));
 
     if (overlapIds.length > 0) {
-      message("Duplicate staff in DM/Instructor removed (kept in DM)", { type: "warning" });
+      message(t("diveErp.trips.duplicateStaffWarning"), { type: "warning" });
     }
 
     const payload: any = {
@@ -426,7 +426,7 @@ async function onSubmit() {
     dialogVisible.value = false;
     loadList();
   } catch (e: any) {
-    message(e?.response?.data?.message || "Request failed", { type: "error" });
+    message(e?.response?.data?.message || t("diveErp.common.requestFailed"), { type: "error" });
   } finally {
     submitLoading.value = false;
   }
@@ -438,7 +438,7 @@ async function handleDelete(row: any) {
     message(t("diveErp.common.delete") + " OK");
     loadList();
   } catch (e: any) {
-    message(e?.response?.data?.message || "Delete failed", { type: "error" });
+    message(e?.response?.data?.message || t("diveErp.common.deleteFailed"), { type: "error" });
   }
 }
 

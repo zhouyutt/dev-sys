@@ -250,6 +250,7 @@ diveErp:
     tripManagement: Trip Management
     staffManagement: Staff Management
     boatManagement: Boat Management
+    pricingManagement: Pricing Management
     enrollmentForm: Enrollment Form
     diveErp: Uncle Chang
   common:
@@ -270,6 +271,13 @@ diveErp:
     noData: No data
     search: Search...
     total: Total
+    yes: Yes
+    no: No
+    addSuccess: Added successfully
+    editSuccess: Updated successfully
+    deleteSuccess: Deleted successfully
+    deleteFailed: Delete failed
+    requestFailed: Request failed
   guests:
     title: Guest Management
     addGuest: "+ Add Guest"
@@ -340,6 +348,7 @@ diveErp:
     selectDestination: Destination
     departureTime: Departure time
     maxParticipants: Max Participants
+    duplicateStaffWarning: Duplicate staff selected in DM/Instructor; kept in DM only
   staff:
     title: Staff Management
     addStaff: "+ Add Staff"
@@ -415,6 +424,51 @@ diveErp:
     passportUploadFail: Failed to upload passport photo.
     enrollSuccess: Enrollment submitted successfully.
     enrollFail: Enrollment failed
+    nameCnPlaceholder: Enter Chinese name
+    courseTypeHint: Course type is one specific item from the course catalog (e.g., OW, AOW).
+    projectPrice: Project Price
+    projectPricePlaceholder: Auto-calculated after selecting course
+    projectPriceHint: Price is 1:1 bound to the selected project and configured on the Pricing page.
+    stayRequired: Stay Required
+    stayDates: Stay Dates
+    stayDatesRequired: Please select check-in and check-out dates
+    rangeSeparator: to
+    roomSharing: Shared Room
+    roomSharingHint: Shared room arrangement is 3-4 guests per room.
+    sipadanTrip: Join Sipadan Trip
+    sipadanTripHint: This Sipadan trip includes 2 dives at Sipadan and 1 dive at Mabul.
+    waiverAgreeText: I have read and agree to the Liability Waiver and Assumption of Risk Agreement.
+    waiverHint: Submitting this form means you agree to the agreement terms.
+    viewAgreement: View Agreement
+    funDiveDateLabel: "{route} Date"
+    funDiveDatePlaceholder: Select date for {route}
+    learningOptions:
+      dsd: DSD
+      ow: OW
+      aow: AOW
+      owAow: OW+AOW
+      snorkeling: Snorkeling
+      hiking: Hiking
+      razor: Razor Side-mounted
+      tech40: Tech 40
+      tech50: Tech 50
+      funDiveMataking: Fun Dive-Mataking Route
+      funDiveSiAmil: Fun Dive-Si Amil Route
+      funDiveMabul: Fun Dive-Mabul Route
+  students:
+    stayRequired: Stay
+    roomSharing: Shared Room
+    sipadanTrip: Join Sipadan Trip
+  pricing:
+    hint: 1:1 pricing config (one project, one price)
+    courseCode: Project Code
+    courseName: Project Name
+    currency: Currency
+    price: Price
+    save: Save
+    loadFailed: Failed to load prices
+    saveSuccess: Price saved successfully
+    saveFailed: Failed to save price
   dashboard:
     title: Uncle Chang
     todayTrips: "Today's Boat Trips"

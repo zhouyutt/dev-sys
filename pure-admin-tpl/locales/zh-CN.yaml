@@ -250,6 +250,7 @@ diveErp:
     tripManagement: 行程管理
     staffManagement: 员工管理
     boatManagement: 船只管理
+    pricingManagement: 价格管理
     enrollmentForm: 报名表
     diveErp: Uncle Chang
   common:
@@ -270,6 +271,13 @@ diveErp:
     noData: 暂无数据
     search: 搜索...
     total: 共
+    yes: 是
+    no: 否
+    addSuccess: 新增成功
+    editSuccess: 编辑成功
+    deleteSuccess: 删除成功
+    deleteFailed: 删除失败
+    requestFailed: 请求失败
   guests:
     title: 客人管理
     addGuest: "+ 新增客人"
@@ -340,6 +348,7 @@ diveErp:
     selectDestination: 目的地
     departureTime: 出发时间
     maxParticipants: 最大人数
+    duplicateStaffWarning: 检测到同一员工同时被选为潜导和教练，已自动保留在潜导中
   staff:
     title: 员工管理
     addStaff: "+ 新增员工"
@@ -415,6 +424,51 @@ diveErp:
     passportUploadFail: 护照照片上传失败。
     enrollSuccess: 报名提交成功。
     enrollFail: 报名失败
+    nameCnPlaceholder: 输入中文姓名
+    courseTypeHint: 课程类型是课程库里的一种具体项目（如 OW、AOW 等）。
+    projectPrice: 项目价格
+    projectPricePlaceholder: 请选择项目后自动计算
+    projectPriceHint: 项目和价格 1:1 绑定，价格来自价格管理页面配置。
+    stayRequired: 是否入住
+    stayDates: 入住时间
+    stayDatesRequired: 请选择入住和离店日期
+    rangeSeparator: 至
+    roomSharing: 是否拼房
+    roomSharingHint: 提示：拼房为 3-4 人一个房间。
+    sipadanTrip: 是否报名诗巴丹行程
+    sipadanTripHint: 本次诗巴丹行程诗巴丹 2 潜，马布岛 1 潜。
+    waiverAgreeText: 我已阅读并同意《责任免除暨风险承担协议》
+    waiverHint: 提交即视为同意协议条款。
+    viewAgreement: 查看协议
+    funDiveDateLabel: "{route} 日期"
+    funDiveDatePlaceholder: 请选择 {route} 日期
+    learningOptions:
+      dsd: DSD
+      ow: OW
+      aow: AOW
+      owAow: OW+AOW
+      snorkeling: 浮潜
+      hiking: 爬山
+      razor: Razor Side-mounted
+      tech40: Tech 40
+      tech50: Tech 50
+      funDiveMataking: Fun Dive-马达京路线
+      funDiveSiAmil: Fun Dive-西亚米路线
+      funDiveMabul: Fun Dive-马布岛路线
+  students:
+    stayRequired: 入住
+    roomSharing: 拼房
+    sipadanTrip: 是否报名诗巴丹行程
+  pricing:
+    hint: 项目价格 1:1 配置（每个项目对应一个价格）
+    courseCode: 项目代码
+    courseName: 项目名称
+    currency: 货币
+    price: 价格
+    save: 保存
+    loadFailed: 加载价格失败
+    saveSuccess: 价格保存成功
+    saveFailed: 价格保存失败
   dashboard:
     title: Uncle Chang
     todayTrips: 今日出海行程

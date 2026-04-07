@@ -84,17 +84,17 @@
       <el-table-column prop="passport_number" :label="t('diveErp.guests.passportNo')" width="130" />
       <el-table-column prop="learning_content" :label="t('diveErp.guests.learningContent')" width="140" align="center">
         <template #default="{ row }">
-          <span v-if="row.learning_contents?.length">{{ row.learning_contents.join(" / ") }}</span>
-          <span v-else>{{ row.learning_content || "—" }}</span>
+          <span v-if="row.learning_contents?.length">{{ row.learning_contents.map(learningContentLabel).join(" / ") }}</span>
+          <span v-else>{{ row.learning_content ? learningContentLabel(row.learning_content) : "—" }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="入住" width="80" align="center">
-        <template #default="{ row }">{{ row.stay_required ? "是" : "否" }}</template>
+      <el-table-column :label="t('diveErp.students.stayRequired')" width="80" align="center">
+        <template #default="{ row }">{{ row.stay_required ? t("diveErp.common.yes") : t("diveErp.common.no") }}</template>
       </el-table-column>
-      <el-table-column label="拼房" width="90" align="center">
+      <el-table-column :label="t('diveErp.students.roomSharing')" width="90" align="center">
         <template #default="{ row }">
           <span v-if="!row.stay_required">—</span>
-          <span v-else>{{ row.room_sharing_preference === "shared" ? "是" : "否" }}</span>
+          <span v-else>{{ row.room_sharing_preference === "shared" ? t("diveErp.common.yes") : t("diveErp.common.no") }}</span>
         </template>
       </el-table-column>
       <el-table-column :label="t('diveErp.guests.room')" width="90" align="center">
@@ -170,7 +170,7 @@
         <el-form-item :label="t('diveErp.common.email')">
           <el-input v-model="form.email" placeholder="email@example.com" />
         </el-form-item>
-        <el-form-item label="WeChat">
+        <el-form-item :label="t('diveErp.enroll.wechat')">
           <el-input v-model="form.wechat" placeholder="WeChat ID" />
         </el-form-item>
         <el-form-item :label="t('diveErp.guests.emergencyContact')">
@@ -181,53 +181,53 @@
         </el-form-item>
         <el-form-item :label="t('diveErp.guests.learningContent')">
           <el-select v-model="form.learning_content" multiple clearable collapse-tags collapse-tags-tooltip style="width: 100%">
-            <el-option v-for="opt in learningContentOptions" :key="opt" :label="opt" :value="opt" />
+            <el-option v-for="opt in learningContentOptions" :key="opt" :label="learningContentLabel(opt)" :value="opt" />
           </el-select>
         </el-form-item>
         <template v-if="selectedFunDiveRoutesInForm.length">
           <el-form-item
             v-for="route in selectedFunDiveRoutesInForm"
             :key="route"
-            :label="`${route} 日期`"
+            :label="t('diveErp.enroll.funDiveDateLabel', { route: learningContentLabel(route) })"
           >
             <el-date-picker
               v-model="form.fun_dive_date_map[route]"
               type="date"
               value-format="YYYY-MM-DD"
-              :placeholder="`请选择 ${route} 日期`"
+              :placeholder="t('diveErp.enroll.funDiveDatePlaceholder', { route: learningContentLabel(route) })"
               style="width: 100%"
             />
           </el-form-item>
         </template>
-        <el-form-item label="是否入住">
+        <el-form-item :label="t('diveErp.students.stayRequired')">
           <el-radio-group v-model="form.stay_required">
-            <el-radio :value="true">是</el-radio>
-            <el-radio :value="false">否</el-radio>
+            <el-radio :value="true">{{ t('diveErp.common.yes') }}</el-radio>
+            <el-radio :value="false">{{ t('diveErp.common.no') }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <template v-if="form.stay_required">
-          <el-form-item label="入住时间">
+          <el-form-item :label="t('diveErp.enroll.stayDates')">
             <el-date-picker
               v-model="form.stay_dates"
               type="daterange"
               value-format="YYYY-MM-DD"
-              range-separator="至"
-              start-placeholder="入住日期"
-              end-placeholder="离店日期"
+              :range-separator="t('diveErp.enroll.rangeSeparator')"
+              :start-placeholder="t('diveErp.guests.checkIn')"
+              :end-placeholder="t('diveErp.guests.checkOut')"
               style="width: 100%"
             />
           </el-form-item>
-          <el-form-item label="是否拼房">
+          <el-form-item :label="t('diveErp.students.roomSharing')">
             <el-radio-group v-model="form.room_sharing_preference">
-              <el-radio value="shared">是</el-radio>
-              <el-radio value="private">否</el-radio>
+              <el-radio value="shared">{{ t('diveErp.common.yes') }}</el-radio>
+              <el-radio value="private">{{ t('diveErp.common.no') }}</el-radio>
             </el-radio-group>
           </el-form-item>
         </template>
-        <el-form-item label="是否报名诗巴丹行程">
+        <el-form-item :label="t('diveErp.students.sipadanTrip')">
           <el-radio-group v-model="form.sipadan_trip">
-            <el-radio :value="true">是</el-radio>
-            <el-radio :value="false">否</el-radio>
+            <el-radio :value="true">{{ t('diveErp.common.yes') }}</el-radio>
+            <el-radio :value="false">{{ t('diveErp.common.no') }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item :label="t('diveErp.guests.room')">
@@ -284,6 +284,23 @@ const FUN_DIVE_OPTIONS = [
   "Fun Dive-西亚米路线",
   "Fun Dive-马布岛路线"
 ];
+const learningContentLabel = (value: string) => {
+  const keyMap: Record<string, string> = {
+    DSD: "diveErp.enroll.learningOptions.dsd",
+    OW: "diveErp.enroll.learningOptions.ow",
+    AOW: "diveErp.enroll.learningOptions.aow",
+    "OW+AOW": "diveErp.enroll.learningOptions.owAow",
+    Snorkeling: "diveErp.enroll.learningOptions.snorkeling",
+    Hiking: "diveErp.enroll.learningOptions.hiking",
+    "Razor Side-mounted": "diveErp.enroll.learningOptions.razor",
+    "Tech 40": "diveErp.enroll.learningOptions.tech40",
+    "Tech 50": "diveErp.enroll.learningOptions.tech50",
+    "Fun Dive-马达京路线": "diveErp.enroll.learningOptions.funDiveMataking",
+    "Fun Dive-西亚米路线": "diveErp.enroll.learningOptions.funDiveSiAmil",
+    "Fun Dive-马布岛路线": "diveErp.enroll.learningOptions.funDiveMabul"
+  };
+  return t(keyMap[value] || value);
+};
 const ENROLL_META_PREFIX = "ENROLL_META:";
 
 const loading = ref(false);
@@ -553,15 +570,15 @@ async function onSubmit() {
     };
     if (isEdit.value && form.id != null) {
       await studentApi.update(form.id, payload);
-      message(t("diveErp.common.edit") + " OK");
+      message(t("diveErp.common.editSuccess"));
     } else {
       await studentApi.create(payload);
-      message(t("diveErp.common.add") + " OK");
+      message(t("diveErp.common.addSuccess"));
     }
     dialogVisible.value = false;
     loadList();
   } catch (e: any) {
-    message(e?.response?.data?.message || "Request failed", { type: "error" });
+    message(e?.response?.data?.message || t("diveErp.common.requestFailed"), { type: "error" });
   } finally {
     submitLoading.value = false;
   }
@@ -570,10 +587,10 @@ async function onSubmit() {
 async function handleDelete(row: any) {
   try {
     await studentApi.delete(row.id);
-    message(t("diveErp.common.delete") + " OK");
+    message(t("diveErp.common.deleteSuccess"));
     loadList();
   } catch (e: any) {
-    message(e?.response?.data?.message || "Delete failed", { type: "error" });
+    message(e?.response?.data?.message || t("diveErp.common.deleteFailed"), { type: "error" });
   }
 }
 
