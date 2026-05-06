@@ -54,23 +54,13 @@ export default {
       }
     },
     {
-      path: "/dive/staff",
-      name: "DiveStaff",
-      component: () => import("@/views/dive-erp/staff/index.vue"),
-      meta: {
-        icon: "ep:user-filled",
-        title: $t("diveErp.menus.staffManagement"),
-        rank: 5
-      }
-    },
-    {
       path: "/dive/boats",
       name: "DiveBoats",
       component: () => import("@/views/dive-erp/boats/index.vue"),
       meta: {
         icon: "ep:ship",
         title: $t("diveErp.menus.boatManagement"),
-        rank: 6
+        rank: 5
       }
     },
     {
@@ -80,7 +70,7 @@ export default {
       meta: {
         icon: "ep:money",
         title: $t("diveErp.menus.pricingManagement"),
-        rank: 7
+        rank: 6
       }
     },
     {
@@ -90,7 +80,7 @@ export default {
       meta: {
         icon: "ep:document",
         title: $t("diveErp.menus.enrollmentForm"),
-        rank: 8
+        rank: 7
       }
     }
   ]

@@ -26,6 +26,19 @@ const validate = (schema) => {
   };
 };
 
+const companionSchema = Joi.object({
+  name_en: Joi.string().required().max(100).label('同行人英文姓名'),
+  name_cn: Joi.string().allow('', null).max(100).label('同行人中文姓名'),
+  gender: Joi.string().valid('male', 'female', 'other').required().label('同行人性别'),
+  phone: Joi.string().allow('', null).max(20).label('同行人电话'),
+  passport_number: Joi.string().required().max(50).label('同行人护照号码'),
+  passport_expiry: Joi.date().allow(null).label('同行人护照过期日期'),
+  nationality: Joi.string().allow('', null).max(50).label('同行人国籍'),
+  email: Joi.string().email().allow('', null).label('同行人邮箱'),
+  wechat: Joi.string().allow('', null).max(50).label('同行人微信号'),
+  notes: Joi.string().allow('', null).label('同行人备注')
+});
+
 // 学员报名验证规则
 const studentEnrollmentSchema = Joi.object({
   name_en: Joi.string().required().max(100).label('英文姓名'),
@@ -64,7 +77,8 @@ const studentEnrollmentSchema = Joi.object({
   ).allow(null).label('Fun Dive 日期'),
   check_in_date: Joi.date().allow(null).label('入住日期'),
   check_out_date: Joi.date().allow(null).label('离店日期'),
-  agree_protocol: Joi.boolean().valid(true).required().label('免责协议确认')
+  agree_protocol: Joi.boolean().valid(true).required().label('免责协议确认'),
+  companions: Joi.array().items(companionSchema).max(20).allow(null).label('同行人列表')
 });
 
 // 登录验证规则

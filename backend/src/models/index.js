@@ -20,6 +20,7 @@ const Equipment = require('./Equipment')(sequelize, DataTypes);
 const EquipmentAssignment = require('./EquipmentAssignment')(sequelize, DataTypes);
 const WechatBinding = require('./WechatBinding')(sequelize, DataTypes);
 const MiniappOperationLog = require("./MiniappOperationLog")(sequelize, DataTypes);
+const PriceItem = require('./PriceItem')(sequelize, DataTypes);
 
 // 定义模型关联关系
 const setupAssociations = () => {
@@ -121,5 +122,6 @@ module.exports = {
   EquipmentAssignment,
   WechatBinding,
   MiniappOperationLog,
+  PriceItem,
   syncDatabase
 };

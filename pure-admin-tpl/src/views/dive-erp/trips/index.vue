@@ -80,12 +80,12 @@
         <template #default="{ row }">{{ row.boat?.boat_name || row.boat_name || "-" }}</template>
       </el-table-column>
       <el-table-column :label="t('diveErp.trips.captain')" width="100">
-        <template #default="{ row }">{{ row.captain?.name_en || row.captain?.name || "-" }}</template>
+        <template #default="{ row }">{{ getCaptainName(row) }}</template>
       </el-table-column>
       <el-table-column :label="t('diveErp.trips.dm')" min-width="120">
         <template #default="{ row }">
           <span v-if="getDmList(row).length">
-            <el-tag v-for="dm in getDmList(row)" :key="dm.id" size="small" class="mr-1">{{ dm.name_en || dm.name }}</el-tag>
+            <el-tag v-for="dm in getDmList(row)" :key="dm" size="small" class="mr-1">{{ dm }}</el-tag>
           </span>
           <span v-else class="text-gray-400">-</span>
         </template>
@@ -93,7 +93,7 @@
       <el-table-column :label="t('diveErp.trips.instructor')" min-width="120">
         <template #default="{ row }">
           <span v-if="getInstructorList(row).length">
-            <el-tag v-for="ins in getInstructorList(row)" :key="ins.id" size="small" type="success" class="mr-1">{{ ins.name_en || ins.name }}</el-tag>
+            <el-tag v-for="ins in getInstructorList(row)" :key="ins" size="small" type="success" class="mr-1">{{ ins }}</el-tag>
           </span>
           <span v-else class="text-gray-400">-</span>
         </template>
@@ -149,21 +149,23 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="t('diveErp.trips.captain')">
-          <el-select v-model="form.captain_id" clearable style="width: 100%">
-            <el-option v-for="s in captains" :key="s.id" :label="s.name_en || s.name" :value="s.id" />
-          </el-select>
+          <el-input v-model="form.captain_name" clearable placeholder="请输入船长姓名" />
         </el-form-item>
-        <!-- 多DM -->
         <el-form-item :label="t('diveErp.trips.dm')">
-          <el-select v-model="form.dm_ids" multiple filterable clearable style="width: 100%" :teleported="false">
-            <el-option v-for="s in dms" :key="s.id" :label="s.name_en || s.name" :value="s.id" />
-          </el-select>
+          <el-input
+            v-model="form.dm_names_text"
+            type="textarea"
+            :rows="3"
+            placeholder="每行一个 DM 姓名"
+          />
         </el-form-item>
-        <!-- 多教练 -->
         <el-form-item :label="t('diveErp.trips.instructor')">
-          <el-select v-model="form.instructor_ids" multiple filterable clearable style="width: 100%" :teleported="false">
-            <el-option v-for="s in instructors" :key="s.id" :label="s.name_en || s.name" :value="s.id" />
-          </el-select>
+          <el-input
+            v-model="form.instructor_names_text"
+            type="textarea"
+            :rows="3"
+            placeholder="每行一个教练姓名"
+          />
         </el-form-item>
         <el-form-item :label="t('diveErp.trips.guestList')">
           <el-select v-model="form.participant_student_ids" multiple filterable style="width: 100%">
@@ -205,7 +207,7 @@ import { ref, reactive, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { Search } from "@element-plus/icons-vue";
 import { message } from "@/utils/message";
-import { tripApi, boatApi, staffApi, studentApi } from "@/api/dive";
+import { tripApi, boatApi, studentApi } from "@/api/dive";
 
 defineOptions({ name: "DiveTrips" });
 
@@ -214,7 +216,6 @@ const { t } = useI18n();
 const loading = ref(false);
 const dataList = ref<any[]>([]);
 const boats = ref<any[]>([]);
-const staffList = ref<any[]>([]);
 const allStudents = ref<any[]>([]);
 const dialogVisible = ref(false);
 const isEdit = ref(false);
@@ -228,10 +229,6 @@ const filterDestination = ref("");
 const filterStatus = ref("");
 const filterDate = ref("");
 
-const captains = computed(() => staffList.value.filter((s: any) => s.role === "captain"));
-const dms = computed(() => staffList.value.filter((s: any) => s.role === "dm"));
-const instructors = computed(() => staffList.value.filter((s: any) => s.role === "instructor"));
-
 const filteredList = computed(() => {
   let list = dataList.value;
   const kw = searchText.value.trim().toLowerCase();
@@ -240,9 +237,9 @@ const filteredList = computed(() => {
       (r.trip_date || "").includes(kw) ||
       (r.destination || "").toLowerCase().includes(kw) ||
       (r.boat?.boat_name || "").toLowerCase().includes(kw) ||
-      (r.captain?.name_en || r.captain?.name || "").toLowerCase().includes(kw) ||
-      getDmList(r).some((d: any) => (d.name_en || d.name || "").toLowerCase().includes(kw)) ||
-      getInstructorList(r).some((i: any) => (i.name_en || i.name || "").toLowerCase().includes(kw)) ||
+      getCaptainName(r).toLowerCase().includes(kw) ||
+      getDmList(r).some((d: string) => d.toLowerCase().includes(kw)) ||
+      getInstructorList(r).some((i: string) => i.toLowerCase().includes(kw)) ||
       (r.status || "").toLowerCase().includes(kw)
     );
   }
@@ -252,25 +249,42 @@ const filteredList = computed(() => {
   return list;
 });
 
-// 获取行程的DM列表（兼容新旧数据）
-function getDmList(row: any): any[] {
+function parseNameText(text: string): string[] {
+  return String(text || "")
+    .split("\n")
+    .map(v => v.trim())
+    .filter(Boolean);
+}
+
+function getCaptainName(row: any): string {
+  return row.manual_captain_name || row.captain?.name_en || row.captain?.name || "-";
+}
+
+// 获取行程的DM列表（兼容手填和旧员工关联）
+function getDmList(row: any): string[] {
+  if (Array.isArray(row.manual_dm_names) && row.manual_dm_names.length > 0) {
+    return row.manual_dm_names;
+  }
   const fromTripStaff = (row.tripStaff || [])
     .filter((ts: any) => ts.role === 'dm')
-    .map((ts: any) => ts.staff)
-    .filter(Boolean);
+    .map((ts: any) => ts.staff?.name_en || ts.staff?.name || "")
+    .filter(Boolean) as string[];
   if (fromTripStaff.length > 0) return fromTripStaff;
-  if (row.dm) return [row.dm];
+  if (row.dm) return [row.dm?.name_en || row.dm?.name].filter(Boolean);
   return [];
 }
 
-// 获取行程的教练列表（兼容新旧数据）
-function getInstructorList(row: any): any[] {
+// 获取行程的教练列表（兼容手填和旧员工关联）
+function getInstructorList(row: any): string[] {
+  if (Array.isArray(row.manual_instructor_names) && row.manual_instructor_names.length > 0) {
+    return row.manual_instructor_names;
+  }
   const fromTripStaff = (row.tripStaff || [])
     .filter((ts: any) => ts.role === 'instructor')
-    .map((ts: any) => ts.staff)
-    .filter(Boolean);
+    .map((ts: any) => ts.staff?.name_en || ts.staff?.name || "")
+    .filter(Boolean) as string[];
   if (fromTripStaff.length > 0) return fromTripStaff;
-  if (row.instructor) return [row.instructor];
+  if (row.instructor) return [row.instructor?.name_en || row.instructor?.name].filter(Boolean);
   return [];
 }
 
@@ -279,9 +293,9 @@ const form = reactive({
   trip_date: "",
   destination: "Mabul Island",
   boat_id: null as number | null,
-  captain_id: null as number | null,
-  dm_ids: [] as number[],
-  instructor_ids: [] as number[],
+  captain_name: "",
+  dm_names_text: "",
+  instructor_names_text: "",
   departure_time: "",
   max_participants: 20,
   status: "scheduled",
@@ -295,15 +309,13 @@ const rules = {
   boat_id: [{ required: true, message: "Required", trigger: "change" }]
 };
 
-async function loadBoatsAndStaff() {
+async function loadBoatsAndStudents() {
   try {
-    const [bRes, sRes, stuRes] = await Promise.all([
+    const [bRes, stuRes] = await Promise.all([
       boatApi.list(),
-      staffApi.list(),
       studentApi.list({ limit: 500 })
     ]);
     boats.value = (bRes as any)?.data ?? [];
-    staffList.value = (sRes as any)?.data ?? [];
     const d = (stuRes as any)?.data;
     allStudents.value = d?.students ?? (Array.isArray(d) ? d : []);
   } catch (_) {}
@@ -328,10 +340,9 @@ function openDialog(_title?: string, row?: any) {
     form.trip_date = row.trip_date;
     form.destination = row.destination;
     form.boat_id = row.boat_id ?? row.boat?.id;
-    form.captain_id = row.captain_id ?? row.captain?.id;
-    // 从 tripStaff 中提取多DM/教练 IDs
-    form.dm_ids = getDmList(row).map((d: any) => d.id).filter(Boolean);
-    form.instructor_ids = getInstructorList(row).map((i: any) => i.id).filter(Boolean);
+    form.captain_name = row.manual_captain_name || row.captain?.name_en || row.captain?.name || "";
+    form.dm_names_text = getDmList(row).join("\n");
+    form.instructor_names_text = getInstructorList(row).join("\n");
     form.departure_time = row.departure_time || "";
     form.max_participants = row.max_participants ?? 20;
     form.status = row.status || "scheduled";
@@ -352,9 +363,9 @@ function resetForm() {
   form.trip_date = "";
   form.destination = "Mabul Island";
   form.boat_id = null;
-  form.captain_id = null;
-  form.dm_ids = [];
-  form.instructor_ids = [];
+  form.captain_name = "";
+  form.dm_names_text = "";
+  form.instructor_names_text = "";
   form.departure_time = "";
   form.max_participants = 20;
   form.status = "scheduled";
@@ -371,26 +382,17 @@ async function onSubmit() {
   }
   submitLoading.value = true;
   try {
-    const normalizedDmIds = Array.from(new Set((form.dm_ids || []).map(Number).filter(Boolean)));
-    const rawInstructorIds = Array.from(new Set((form.instructor_ids || []).map(Number).filter(Boolean)));
-    const overlapIds = rawInstructorIds.filter(id => normalizedDmIds.includes(id));
-    const normalizedInstructorIds = rawInstructorIds.filter(id => !normalizedDmIds.includes(id));
-
-    if (overlapIds.length > 0) {
-      message(t("diveErp.trips.duplicateStaffWarning"), { type: "warning" });
-    }
-
+    const dmNames = parseNameText(form.dm_names_text);
+    const instructorNames = parseNameText(form.instructor_names_text);
     const payload: any = {
       trip_date: form.trip_date,
       destination: form.destination,
       boat_id: form.boat_id,
-      captain_id: form.captain_id || null,
-      // 保留旧字段兼容（取第一个）
-      dm_id: normalizedDmIds[0] || null,
-      instructor_id: normalizedInstructorIds[0] || null,
-      // 新多人字段
-      dm_ids: normalizedDmIds,
-      instructor_ids: normalizedInstructorIds,
+      captain_name: form.captain_name || "",
+      dm_names: dmNames,
+      instructor_names: instructorNames,
+      dm_ids: [],
+      instructor_ids: [],
       departure_time: form.departure_time || null,
       max_participants: form.max_participants,
       status: form.status,
@@ -443,7 +445,7 @@ async function handleDelete(row: any) {
 }
 
 onMounted(() => {
-  loadBoatsAndStaff();
+  loadBoatsAndStudents();
   loadList();
 });
 </script>

@@ -55,6 +55,10 @@ export const studentApi = {
     http.delete<{ success: boolean }>(`${base}/students/${id}`),
   enroll: (data: any) =>
     http.post<{ success: boolean; data: any }>(`${base}/students/enroll`, data),
+  generateItineraryPdf: (id: number) =>
+    http.post<{ success: boolean; data: { pdfUrl: string; downloadUrl: string; fileName: string; total: number } }>(
+      `${base}/students/${id}/generate-itinerary-pdf`
+    ),
   uploadPassport: (formData: FormData) =>
     http.post<{ success: boolean; data: any }>(`${base}/students/upload-passport`, formData, {
       headers: { "Content-Type": "multipart/form-data" }
@@ -105,6 +109,16 @@ export const courseApi = {
     http.get<{ success: boolean; data: any[] }>(`${base}/courses`, { params }),
   update: (id: number, data: any) =>
     http.put<{ success: boolean; data: any }>(`${base}/courses/${id}`, data)
+};
+
+/** 价格项（内部维护） */
+export const pricingApi = {
+  list: (params?: Record<string, any>) =>
+    http.get<{ success: boolean; data: any[] }>(`${base}/pricing`, { params }),
+  create: (data: any) =>
+    http.post<{ success: boolean; data: any }>(`${base}/pricing`, data),
+  update: (id: number, data: any) =>
+    http.put<{ success: boolean; data: any }>(`${base}/pricing/${id}`, data)
 };
 
 /** 首页看板统计 */

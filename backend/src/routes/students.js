@@ -17,6 +17,9 @@ router.use(authMiddleware);
 // 获取所有学员
 router.get('/', studentController.getAllStudents);
 
+// 下载学员行程单 PDF（需放在 /:id 前）
+router.get('/:id/itinerary-pdf', studentController.downloadItineraryPdf);
+
 // 获取单个学员
 router.get('/:id', studentController.getStudentById);
 
@@ -34,5 +37,8 @@ router.post('/:id/assign-room', studentController.assignRoom);
 
 // 分配教练
 router.post('/:id/assign-instructor', studentController.assignInstructor);
+
+// 手动生成单个客人的行程单 PDF
+router.post('/:id/generate-itinerary-pdf', studentController.generateItineraryPdf);
 
 module.exports = router;

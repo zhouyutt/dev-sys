@@ -1,5 +1,46 @@
 const { Trip, Boat, Staff, TripParticipant, TripStaff, Student, Room, sequelize } = require('../models');
 const { Op } = require('sequelize');
+const TRIP_META_PREFIX = 'TRIP_META:';
+
+function parseTripMetaFromNotes(notes) {
+  if (!notes) return {};
+  const lines = String(notes).split('\n');
+  const metaLine = lines.find(line => line.startsWith(TRIP_META_PREFIX));
+  if (!metaLine) return {};
+  try {
+    return JSON.parse(metaLine.slice(TRIP_META_PREFIX.length));
+  } catch (e) {
+    return {};
+  }
+}
+
+function mergeTripNotes(originalNotes, meta) {
+  const lines = String(originalNotes || '')
+    .split('\n')
+    .filter(line => line && !line.startsWith(TRIP_META_PREFIX));
+  lines.push(`${TRIP_META_PREFIX}${JSON.stringify(meta)}`);
+  return lines.join('\n');
+}
+
+function normalizeNameList(input) {
+  if (!input) return [];
+  if (Array.isArray(input)) {
+    return input.map(v => String(v).trim()).filter(Boolean);
+  }
+  return String(input)
+    .split(/\n|,/)
+    .map(v => v.trim())
+    .filter(Boolean);
+}
+
+function enrichTripWithManualCrew(trip) {
+  const data = typeof trip.toJSON === 'function' ? trip.toJSON() : trip;
+  const meta = parseTripMetaFromNotes(data.notes);
+  data.manual_captain_name = meta.captain_name || '';
+  data.manual_dm_names = Array.isArray(meta.dm_names) ? meta.dm_names : [];
+  data.manual_instructor_names = Array.isArray(meta.instructor_names) ? meta.instructor_names : [];
+  return data;
+}
 
 // 获取所有行程
 exports.getAllTrips = async (req, res) => {
@@ -41,7 +82,7 @@ exports.getAllTrips = async (req, res) => {
 
     res.json({
       success: true,
-      data: trips
+      data: trips.map(enrichTripWithManualCrew)
     });
   } catch (error) {
     console.error('获取行程列表失败:', error);
@@ -95,7 +136,7 @@ exports.getTomorrowTrips = async (req, res) => {
       success: true,
       data: {
         date: tomorrowStr,
-        trips,
+        trips: trips.map(enrichTripWithManualCrew),
         groupedByDestination: groupedTrips
       }
     });
@@ -139,7 +180,7 @@ exports.getTripById = async (req, res) => {
 
     res.json({
       success: true,
-      data: trip
+      data: enrichTripWithManualCrew(trip)
     });
   } catch (error) {
     console.error('获取行程详情失败:', error);
@@ -154,7 +195,7 @@ exports.getTripById = async (req, res) => {
 exports.createTrip = async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const { dm_ids, instructor_ids, ...tripData } = req.body;
+    const { dm_ids, instructor_ids, captain_name, dm_names, instructor_names, ...tripData } = req.body;
     const dmIds = Array.isArray(dm_ids)
       ? [...new Set(dm_ids.map(id => Number(id)).filter(Boolean))]
       : [];
@@ -162,6 +203,12 @@ exports.createTrip = async (req, res) => {
       ? [...new Set(instructor_ids.map(id => Number(id)).filter(Boolean))]
       : [];
     const instructorIds = instructorIdsRaw.filter(id => !dmIds.includes(id));
+    const meta = {
+      captain_name: captain_name ? String(captain_name).trim() : '',
+      dm_names: normalizeNameList(dm_names),
+      instructor_names: normalizeNameList(instructor_names)
+    };
+    tripData.notes = mergeTripNotes(tripData.notes, meta);
     const trip = await Trip.create(tripData, { transaction: t });
 
     // 保存多DM
@@ -182,7 +229,7 @@ exports.createTrip = async (req, res) => {
     res.status(201).json({
       success: true,
       message: '创建行程成功',
-      data: trip
+      data: enrichTripWithManualCrew(trip)
     });
   } catch (error) {
     await t.rollback();
@@ -209,7 +256,7 @@ exports.updateTrip = async (req, res) => {
       });
     }
 
-    const { dm_ids, instructor_ids, ...tripData } = req.body;
+    const { dm_ids, instructor_ids, captain_name, dm_names, instructor_names, ...tripData } = req.body;
     const dmIds = Array.isArray(dm_ids)
       ? [...new Set(dm_ids.map(id => Number(id)).filter(Boolean))]
       : [];
@@ -217,6 +264,14 @@ exports.updateTrip = async (req, res) => {
       ? [...new Set(instructor_ids.map(id => Number(id)).filter(Boolean))]
       : [];
     const instructorIds = instructorIdsRaw.filter(id => !dmIds.includes(id));
+    const oldMeta = parseTripMetaFromNotes(trip.notes);
+    const mergedMeta = {
+      captain_name: captain_name === undefined ? (oldMeta.captain_name || '') : String(captain_name || '').trim(),
+      dm_names: dm_names === undefined ? (oldMeta.dm_names || []) : normalizeNameList(dm_names),
+      instructor_names:
+        instructor_names === undefined ? (oldMeta.instructor_names || []) : normalizeNameList(instructor_names)
+    };
+    tripData.notes = mergeTripNotes(tripData.notes === undefined ? trip.notes : tripData.notes, mergedMeta);
     await trip.update(tripData, { transaction: t });
 
     // 更新多DM：先删除旧的，再插入新的
@@ -239,7 +294,7 @@ exports.updateTrip = async (req, res) => {
     res.json({
       success: true,
       message: '更新成功',
-      data: trip
+      data: enrichTripWithManualCrew(trip)
     });
   } catch (error) {
     await t.rollback();

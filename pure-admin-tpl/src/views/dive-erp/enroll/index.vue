@@ -190,6 +190,65 @@
           <el-input v-model="form.notes" type="textarea" :rows="3" :placeholder="t('diveErp.enroll.additionalNotes')" />
         </el-form-item>
 
+        <el-divider content-position="left">同行人信息（可选）</el-divider>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-gray-500">可由一位联系人一次填写全部同行人；提交后每位客人独立建档。</span>
+          <el-button type="primary" plain size="small" @click="addCompanion">新增同行人</el-button>
+        </div>
+        <div v-for="(companion, idx) in form.companions" :key="idx" class="mb-4 p-3 border border-gray-200 rounded">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-medium text-sm">同行人 #{{ idx + 1 }}</span>
+            <el-button link type="danger" size="small" @click="removeCompanion(idx)">移除</el-button>
+          </div>
+          <el-row :gutter="12">
+            <el-col :span="12">
+              <el-form-item label="英文名">
+                <el-input v-model="companion.name_en" placeholder="Companion name" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="中文名">
+                <el-input v-model="companion.name_cn" placeholder="中文名（可选）" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="性别">
+                <el-select v-model="companion.gender" style="width: 100%">
+                  <el-option :label="t('diveErp.enroll.male')" value="male" />
+                  <el-option :label="t('diveErp.enroll.female')" value="female" />
+                  <el-option :label="t('diveErp.enroll.other')" value="other" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="电话">
+                <el-input v-model="companion.phone" placeholder="+6012..." />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="国籍">
+                <el-input v-model="companion.nationality" placeholder="Nationality" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="护照号">
+                <el-input v-model="companion.passport_number" placeholder="Passport number" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="护照有效期">
+                <el-date-picker
+                  v-model="companion.passport_expiry"
+                  type="date"
+                  value-format="YYYY-MM-DD"
+                  placeholder="Passport expiry"
+                  style="width: 100%"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
+
         <el-divider content-position="left">{{ t("diveErp.enroll.agreementTitle") }}</el-divider>
         <el-form-item prop="agree_protocol">
           <el-checkbox v-model="form.agree_protocol">
@@ -276,7 +335,16 @@ const form = reactive({
   sipadan_trip: false as boolean,
   fun_dive_date_map: {} as Record<string, string>,
   notes: "",
-  agree_protocol: false
+  agree_protocol: false,
+  companions: [] as Array<{
+    name_en: string;
+    name_cn: string;
+    gender: string;
+    phone: string;
+    nationality: string;
+    passport_number: string;
+    passport_expiry: string;
+  }>
 });
 
 const rules = {
@@ -354,6 +422,22 @@ function handlePassportError() {
   message(t("diveErp.enroll.passportUploadFail"), { type: "error" });
 }
 
+function addCompanion() {
+  form.companions.push({
+    name_en: "",
+    name_cn: "",
+    gender: "male",
+    phone: "",
+    nationality: form.nationality || "",
+    passport_number: "",
+    passport_expiry: ""
+  });
+}
+
+function removeCompanion(index: number) {
+  form.companions.splice(index, 1);
+}
+
 async function onSubmit() {
   try {
     if (formRef.value) await formRef.value.validate();
@@ -387,10 +471,17 @@ async function onSubmit() {
         route,
         date: form.fun_dive_date_map[route] || null
       })),
-      agree_protocol: form.agree_protocol
+      agree_protocol: form.agree_protocol,
+      companions: form.companions
+        .filter(item => item.name_en && item.passport_number)
+        .map(item => ({
+          ...item,
+          phone: item.phone || form.phone
+        }))
     });
     message(t("diveErp.enroll.enrollSuccess"), { type: "success" });
     formRef.value?.resetFields();
+    form.companions = [];
   } catch (e: any) {
     message(e?.response?.data?.message || t("diveErp.enroll.enrollFail"), { type: "error" });
   } finally {

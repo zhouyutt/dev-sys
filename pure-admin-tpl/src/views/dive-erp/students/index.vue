@@ -115,8 +115,17 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column :label="t('diveErp.common.actions')" width="140" fixed="right" align="center">
+      <el-table-column :label="t('diveErp.common.actions')" width="220" fixed="right" align="center">
         <template #default="{ row }">
+          <el-button
+            v-if="(row.tripParticipations || []).length > 0"
+            link
+            type="success"
+            size="small"
+            @click="handleGeneratePdf(row)"
+          >
+            生成行程单
+          </el-button>
           <el-button link type="primary" size="small" @click="openDialog('Edit', row)">{{ t("diveErp.common.edit") }}</el-button>
           <el-popconfirm :title="t('diveErp.guests.deleteConfirm')" @confirm="handleDelete(row)">
             <template #reference>
@@ -302,6 +311,20 @@ const learningContentLabel = (value: string) => {
   return t(keyMap[value] || value);
 };
 const ENROLL_META_PREFIX = "ENROLL_META:";
+const apiBase = (import.meta.env.VITE_API_BASE as string) || "/api";
+
+function resolveBackendFileUrl(fileUrl: string) {
+  if (!fileUrl) return "";
+  if (/^https?:\/\//.test(fileUrl)) return fileUrl;
+  let base = "";
+  if (/^https?:\/\//.test(apiBase)) {
+    base = apiBase.replace(/\/api\/?$/, "");
+  } else {
+    // 当前部署 frontend 在 8082，backend 在 3000，/uploads 需要直连 backend
+    base = `${window.location.protocol}//${window.location.hostname}:3000`;
+  }
+  return `${base}${fileUrl.startsWith("/") ? fileUrl : `/${fileUrl}`}`;
+}
 
 const loading = ref(false);
 const dataList = ref<any[]>([]);
@@ -591,6 +614,22 @@ async function handleDelete(row: any) {
     loadList();
   } catch (e: any) {
     message(e?.response?.data?.message || t("diveErp.common.deleteFailed"), { type: "error" });
+  }
+}
+
+async function handleGeneratePdf(row: any) {
+  try {
+    const res = await studentApi.generateItineraryPdf(row.id);
+    const data = (res as any)?.data;
+    if (data?.pdfUrl) {
+      const url = resolveBackendFileUrl(data.pdfUrl);
+      window.open(`${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`, "_blank");
+    } else if (data?.downloadUrl) {
+      window.open(resolveBackendFileUrl(data.downloadUrl), "_blank");
+    }
+    message("行程单已生成（如有修改可重新生成覆盖）", { type: "success" });
+  } catch (e: any) {
+    message(e?.response?.data?.message || "生成行程单失败", { type: "error" });
   }
 }
 
